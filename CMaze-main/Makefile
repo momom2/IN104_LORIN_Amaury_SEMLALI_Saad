@@ -7,7 +7,7 @@ SRC = source/
 EXEC = dfs_target
 #$(info EXEC after = $(EXEC))
 #$(info DIRECTORY before = $(DIRECTORY))
-DIRECTORY = /home/ensta/Documents/in104/CMaze
+DIRECTORY = ~/ # Make sure you're in the right directory!
 #$(info DIRECTORY after = $(DIRECTORY))
 
 
