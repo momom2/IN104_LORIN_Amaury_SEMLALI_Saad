@@ -36,7 +36,7 @@ typedef enum action action ;
 struct envOutput{
   int new_col;
   int new_row;
-  int reward;
+  double reward;
   int done;
 
 };
@@ -52,6 +52,15 @@ void maze_render();
 void maze_reset();
 
 envOutput maze_step(action a); 
+
+void test_envOutput();
+int rand_col();
+int rand_row();
+
+int rand_coord();
+void coord(int coordonnee, int* r, int* c);
+int case_coord(int coord_r, int coord_c);
+void test_coord_converter();
 
 action env_action_sample();
 

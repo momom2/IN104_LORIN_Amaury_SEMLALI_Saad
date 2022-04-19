@@ -84,19 +84,69 @@ void maze_reset(){
      state_col = start_col;
 }
 
+
+
 envOutput maze_step(action a){
-    int reward = 0;
+    double reward = -0.04;
     int done = 0;
     envOutput stepOut;
 
     if (a==up){
-       state_row = max(0,state_row -1);
+        if(state_row <= 0) { // On se cogne contre le bord.
+            //printf("Ouch.\n");
+            reward -= 0.5;
+            state_row = 0;
+        } else if(visited[state_row-1][state_col] == wall) { // On se cogne contre un mur.
+            //printf("Ouch.\n");
+            reward -= 0.5;
+        } else if (visited[state_row-1][state_col] == known){ // On revient sur nos pas.
+            reward -= 0.2;
+            state_row -=1;
+        } else { // On avance.
+            state_row -=1;
+        }
     }else if (a==down){
-       state_row = min(rows,state_row +1);
+        if(state_row >= rows) { // On se cogne contre le bord.
+            //printf("Ouch.\n");
+            reward -= 0.5;
+            state_row = rows;
+        } else if(visited[state_row+1][state_col] == wall) { // On se cogne contre un mur.
+            //printf("Ouch.\n");
+            reward -= 0.5;
+        } else if (visited[state_row+1][state_col] == known){ // On revient sur nos pas.
+            reward -= 0.2;
+            state_row +=1;
+        } else { // On avance.
+            state_row +=1;
+        }
     }else if (a==right){
-       state_col = min(cols,state_col +1);
+        if(state_col >= cols) { // On se cogne contre le bord.
+            //printf("Ouch.\n");
+            reward -= 0.5;
+            state_col = cols;
+        } else if(visited[state_row][state_col+1] == wall) { // On se cogne contre un mur.
+            //printf("Ouch.\n");
+            reward -= 0.5;
+        } else if (visited[state_row][state_col+1] == known){ // On revient sur nos pas.
+            reward -= 0.2;
+            state_col +=1;
+        } else {
+            state_col +=1;
+        }
     }else if (a==left){
-       state_col = max(0,state_col -1);
+        if(state_col <= 0) { // On se cogne contre le bord.
+            //printf("Ouch.\n");
+            reward -= 0.5;
+            state_col = 0;
+        } else if(visited[state_row][state_col-1] == wall) { // On se cogne contre un mur.
+            //printf("Ouch.\n");
+            reward -= 0.5;
+        } else if (visited[state_row][state_col-1] == known){ // On revient sur nos pas.
+            reward -= 0.2;
+            state_col -=1;
+        } else { // On avance.
+            state_row -=1;
+        }
     }
     
     if((state_row == goal_row) && (state_col == goal_col)){
@@ -104,6 +154,7 @@ envOutput maze_step(action a){
        done   = 1;
     }
 
+    //printf("Inside. Reward: %f, done: %d, col: %d, row: %d.\n", reward, done, state_col, state_row);
     stepOut.reward = reward;
     stepOut.done   = done;
     stepOut.new_col = state_col;
@@ -111,6 +162,64 @@ envOutput maze_step(action a){
 
    return stepOut;
 }
+
+void test_envOutput(){
+    printf("Test de envOutput.\n");
+    for(int i=0;i<10;++i){
+        action a = env_action_sample();
+        state_col = rand_col();
+        int temp_state_col = state_col;
+        state_row = rand_row();
+        int temp_state_row = state_row;
+        envOutput out = maze_step(a);
+        printf("Reward: %f\nState: moved from (%d,%d) to (%d,%d) with action %d.\nDone? %d\n",  \
+            out.reward,temp_state_row,temp_state_col,state_row,state_col,a,out.done);
+    }
+    printf("Fin du test.\n");
+}
+//test_envOuptut();
+
+int rand_col(){
+    return (rand() % cols);
+}
+int rand_row(){
+    return (rand() % rows);
+}
+int rand_coord(){
+    return (rand() % (rows*cols));
+}
+
+void coord(int coordonnee, int* r, int* c){
+    *r = coordonnee / cols;
+    *c = coordonnee % cols;
+}
+    
+int case_coord(int coord_r, int coord_c){
+    return cols*coord_r + coord_c;
+}
+
+void test_coord_converter(){
+    printf("Test de case_coord.\n");
+    for(int i=0;i<10;++i){
+        state_col = rand_col();
+        state_row = rand_row();
+        int coordonnee = case_coord(state_row, state_col);
+        printf("Coordonnee de (%d,%d): %d.\n",  \
+            state_row,state_col,coordonnee);
+    }
+    printf("Test de coord.\n");
+
+    for(int i=0;i<10;++i){
+        int coordonnee = rand_coord();
+        int* pcol = &state_col;
+        int* prow = &state_row;
+        coord(coordonnee, prow, pcol);
+        printf("Coordonnee de (%d,%d): %d.\n",  \
+            state_row,state_col,coordonnee);
+    }
+    printf("Fin du test.\n");
+}
+
 
 action env_action_sample(){
   return (enum action)(rand() % number_actions);
