@@ -30,7 +30,7 @@ enum action{
      right,
      number_actions 
 };
- 
+
 typedef enum action action ;
 
 struct envOutput{
@@ -38,6 +38,7 @@ struct envOutput{
   int new_row;
   double reward;
   int done;
+  int has_moved;
 
 };
 
@@ -47,11 +48,14 @@ void alloc_maze();
 
 void maze_make(char* );
 
-void maze_render(); 
+void maze_render();
 
 void maze_reset();
 
 envOutput maze_step(action a); 
+
+// Returns an arrow corresponding to the action - up, down, left or right.
+char graphical_move(int action);
 
 void test_envOutput();
 int rand_col();
@@ -67,5 +71,9 @@ action env_action_sample();
 void alloc_visited();
 
 void init_visited();
+void reset_visited();
+void print_visited();
+
+void quit_maze();
 
 #endif /* MAZEENV_H */
