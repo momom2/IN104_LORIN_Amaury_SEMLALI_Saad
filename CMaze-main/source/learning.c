@@ -248,3 +248,19 @@ void quit(){
     } 
     printf("Agent terminated.\n");
 }
+
+int boltzman_exploration(int* i, int* j, float** Q){
+    //Génération des poids
+        // Calcul de l'exponentielle de chaque action
+    poids_max=somme(Q[case_coord(i,j)]),nombre_actions,exp);
+        //calcul du nombre de décimales du poids max
+    
+    //Choix de l'action aléatoirement
+    srand(time(NULL)); //use current time as seed for random generator
+    double action_choisie = rand()%(poids_max*10000)/10000;
+    for(int i=0;i<nombre_actions;i++){
+       if(action_choisie>exp(Q[case_coord(i,j)][i]&&action_choisie<somme(Q[case_coord(i,j)]),i+1,exp)){
+        action_choisie=i;
+        } 
+    return action_choisie
+    }
