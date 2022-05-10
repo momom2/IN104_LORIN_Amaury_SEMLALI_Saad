@@ -73,6 +73,7 @@ void alloc_visited();
 void init_visited();
 void reset_visited();
 void print_visited();
+void crash_visited();
 
 void quit_maze();
 

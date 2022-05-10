@@ -133,7 +133,7 @@ int main(){
     
 
     // IF test_mode IS SET TO 1, NO AGENT WILL BE SPAWNED NOR TRAINED. 
-    int test_mode = 1;
+    int test_mode = 0;
     // debug_mode ACTIVATES A FEW printfS HERE AND THERE. The bigger, the more! 
     int debug_mode = 1;
 
@@ -165,7 +165,7 @@ int main(){
         }
 
         int training_mode = epsilon_greedy;
-        max_epoch = 1000;
+        max_epoch = 10000;
         current_epoch = 0;
         learning_rate = 0.1;
         discount_rate = 0.9;
@@ -200,7 +200,9 @@ int main(){
     // TEST ZONE.
     if(test_mode){
         srand(time(NULL));
-        test_envOutput(1);
+        //crash_visited();
+        int is_random = 0;
+        test_envOutput(is_random);
         //test_rand();
         //test_coord_converter();
     }
@@ -210,8 +212,10 @@ int main(){
         printf("Résultat de recherche par apprentissage.\nAppuyer sur une touche pour afficher.\n");
         getchar();
         
+
         ////////////////////
         if(debug_mode>0){
+            printQ(Q);
             /*printf("Length of visited: %lux%lu\nLength of maze: %lux%lu\nLength of Q: %lux%lu\n", \
                 ARRAY_LENGTH(visited),ARRAY_LENGTH(visited[0]),                             \
                 ARRAY_LENGTH(maze),ARRAY_LENGTH(maze[0]),                                   \

@@ -96,7 +96,7 @@ envOutput maze_step(action a){
     envOutput stepOut;
 
     if (a==up){
-        printf("To infinity and beyond!\n");
+        //printf("To infinity and beyond!\n");
         if(state_row <= 0) { // On se cogne contre le bord.
             //printf("Ouch.\n");
             reward -= 0.5;
@@ -113,7 +113,7 @@ envOutput maze_step(action a){
             moved_successfully = 1;
         }
     }else if (a==down){
-        printf("When you gaze into the abyss...\n");
+        //printf("When you gaze into the abyss...\n");
         //printf("%d %d\n",state_row,rows);
         if(state_row >= rows-1) { // On se cogne contre le bord.
             //printf("Ouch.\n");
@@ -131,14 +131,11 @@ envOutput maze_step(action a){
             moved_successfully = 1;
         }
     }else if (a==right){
-        printf("Alrighty!\n");
-        printf("%d %d %d\n",state_col,cols,visited[state_row][state_col+1]);
-        printf("%d %d %d\n",state_col,cols,visited[state_row][state_col+2]);
-
-        if(state_col >= cols) { // On se cogne contre le bord.
+        //printf("Alrighty!\n");
+        if(state_col >= cols-1) { // On se cogne contre le bord.
             //printf("Ouch.\n");
             reward -= 0.5;
-            state_col = cols;
+            state_col = cols-1;
         } else if(visited[state_row][state_col+1] == wall) { // On se cogne contre un mur.
             //printf("Ouch.\n");
             reward -= 0.5;
@@ -151,7 +148,7 @@ envOutput maze_step(action a){
             moved_successfully = 1;
         }
     }else if (a==left){
-        printf("...and desert you.\n");
+        //printf("...and desert you.\n");
         if(state_col <= 0) { // On se cogne contre le bord.
             //printf("Ouch.\n");
             reward -= 0.5;
@@ -221,7 +218,7 @@ void test_envOutput(int random){
             out.reward,state_row,state_col,out.has_moved,out.done);
     } else { // Test randomisé.
         for(int i=0;i<100;++i){
-            printf("i: %d\n",i);
+            printf("\ni: %d\n",i);
             
             a = env_action_sample();
             state_col = rand_col();
@@ -338,6 +335,13 @@ void print_visited(){
     }
 }
 
+void crash_visited(){
+    int j = 0;
+    while(1){
+        printf("j: %d, visited[0][j]: %d",j,visited[0][j]);
+        ++j;
+    }
+}
 
 
 void quit_maze(){
