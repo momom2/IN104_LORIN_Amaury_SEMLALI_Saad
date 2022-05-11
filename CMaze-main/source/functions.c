@@ -51,7 +51,21 @@ int argmax(double* list, int length){
     }
     return temp_argmax;
 }
-
+int argmax2(double* list1,double* list2,int length){
+    if (length<=0){
+        printf("Error in list length. Argmax failed.\n");
+        return -1;
+    }
+    double temp_argmax = 0;
+    double temp_max = list1[0]+list2[0]; 
+    for(int i=1;i<length;++i){
+        if (list1[i]+list2[i]>temp_max){
+            temp_argmax = i;
+            temp_max = list1[i]+list2[i];
+        }
+    }
+    return temp_argmax;
+}
 /* msleep(): Sleep for the requested number of milliseconds. */
 // Copy-pasted from https://www.codegrepper.com/code-examples/c/c+sleep+milliseconds //
 int msleep(long msec){
