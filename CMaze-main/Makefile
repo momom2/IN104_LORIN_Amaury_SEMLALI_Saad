@@ -1,6 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror
-# Pas de CFLAGS, déjà en alias dans bashrc : -Wall -Werror ??? A vérifier : bashrc bizarre...
+CFLAGS = -Wall -Werror -lm
 INC = -Iinclude/
 SRC = source/
 #$(info EXEC before = $(EXEC))

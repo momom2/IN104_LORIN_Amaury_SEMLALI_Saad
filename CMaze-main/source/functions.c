@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>    
+#include <math.h>
 
 int min(int a, int b){
     return (a>b) ? b : a;
@@ -11,7 +12,26 @@ int min(int a, int b){
 int max(int a, int b){
     return (a>b) ? a : b;
 }
+double maxf(double a, double b){
+    return (a>b) ? a : b;
+}
 
+// randf(): Generate random double between 0 and maximum.
+double randf(double maximum){
+    return ((double)rand()/(double)(RAND_MAX)) * maximum;
+}
+
+void test_randf(){
+    printf("Testing randf with 25000 as maximum.\n");
+    for (int i=0;i<10;++i){
+        printf("Random number : %f\n", randf(25000));
+    }
+    printf("Testing randf with 0.0001 as maximum.\n");
+    for (int i=0;i<10;++i){
+        printf("Random number : %f\n", randf(0.0001));
+    }
+    printf("Test finished.\n");
+}
 void test_rand(){
     printf("Testing rand.\n");
     for (int i=0;i<10;++i){
@@ -72,4 +92,79 @@ int msleep(long msec){
     } while (res && errno == EINTR);
 
     return res;
+}
+
+
+/* ///// OBSOLETE CODE, DOES NOT WORK. TODO: REIMPLEMENT SOMME CLEANLY, BASED ON THIS.
+   ///// cf https://stackoverflow.com/questions/72189642/how-to-cast-function-into-a-struct-in-c/72192354#72192354
+
+double square_fun(double x){
+    return x*x;
+}
+struct double_fun square = square_fun;
+double identity_fun(double x){
+    return x;
+}
+struct double_fun identity = identity_fun;
+double inverse_fun(double x){
+    return 1/x;
+}
+struct double_fun inverse = inverse_fun;
+double twice_fun(double x){
+    return 2*x;
+}
+struct double_fun twice = twice_fun;
+
+// Exponential function.
+double exponential_temp(double x, double temperature){
+    return exp(x/temperature); // From math.h
+}
+
+struct double_fun exponential(double temperature){
+    double aux_fun(double x){return exponential_temp(x, temperature);};
+    struct double_fun aux = aux_fun;
+    return aux;
+}
+*/
+
+// Test functions for somme.
+double identity(double x, double temperature){
+    return x;
+}
+double square(double x, double temperature){
+    return x*x;
+}
+double inverse(double x, double temperature){
+    return 1/x;
+}
+double twice(double x, double temperature){
+    return 2*x;
+}
+double exponential(double x, double temperature){
+    return exp(x/temperature);
+}
+
+double somme(double* liste, int length, double (*function)(double, double), double temperature){
+    double poids = 0;
+    for(int i=0;i<length;++i){
+        poids = poids + function(liste[i],temperature);
+    }
+    return poids;
+}
+    
+void test_somme(int random){
+    if(!random){
+        double liste[5] = {1,2,5,3,4};
+        double temperature = 2;
+        printf("liste = {1,2,5,3,4}, temperature = 2\n");
+        printf("somme(liste,5,identity,temperature) = %f\n",somme(liste,5,identity, temperature));
+        printf("somme(liste,5,square,temperature) = %f\n",somme(liste,5,square,temperature));
+        printf("somme(liste,5,inverse,temperature) = %f\n",somme(liste,5,inverse,temperature));
+        double liste_vide[0] = {};
+        printf("somme({},0,square,temperature) = %f\n",somme(liste_vide,0,square,temperature));
+        printf("somme(liste,5,exponential,temperature) = %f\n",somme(liste,5,exponential,temperature));
+    } else {
+        // TODO: generate random lists and test them with random modifiers, printing everything on the way...
+        
+    }
 }

@@ -14,6 +14,7 @@ double** Q; 				// Q-table Q[rows*cols][number_actions]
 double learning_rate; 		// learning rate
 double discount_rate;	 	// discount rate
 double epsilon; 			// For epsilon-greedy learning, probability to explore.
+double temperature;         // Parameter for Boltzmann exploration.
 int max_epoch; 				// Total number of times the agent will play.
 int current_epoch;	 		// Tracks the number of times the agent has played.
 	
@@ -22,10 +23,8 @@ int current_epoch;	 		// Tracks the number of times the agent has played.
 
 enum training_mode{
     epsilon_greedy,
-    number_training_modes, 	// Modes after this are not implemented - yet.
     boltzmann_exploration,
-    sarsa,
-    double_Q
+    number_training_modes, 	// Modes after this are not implemented - yet.
 };
 
 // Allocate Q and initialize constants for training.
@@ -44,7 +43,7 @@ int goal_reached(int coordonnee, int done);
 void printQ(double** Q);
 
 // Update Q over one epoch of training, according to the chosen training mode.
-void train_one_epoch(double epsilon, int training_mode);
+void train_one_epoch(double epsilon, double temperature, int training_mode);
 
 // RELEASE THE AGENT!
 int main();
