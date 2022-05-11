@@ -207,7 +207,7 @@ int main(){
         }
         
         // TRAIN THE MODEL//
-        printf("Enter to start training.\n");
+        printf("Press any key to start training.\n");
         
         getchar();
 
@@ -244,7 +244,7 @@ int main(){
     ////////////////////////////////////
 
     if(!test_mode){
-        printf("Résultat de recherche par apprentissage.\nAppuyer sur une touche pour afficher.\n");
+        printf("Results of the training.\nPress any key to display.\n");
         getchar();
         
 
@@ -261,7 +261,7 @@ int main(){
         if(debug_mode>1){
             print_visited();
         }
-        printf("Fin.\n");
+        printf("The end. Hope you enjoyed it! ^-^\n");
         
         // Free everything. Information wants to be free, and so do mice!
         quit();

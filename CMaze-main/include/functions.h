@@ -12,6 +12,7 @@ extern void test_rand();
 
 extern double listmax(double* list, int length);
 extern int argmax(double* list, int length);
+extern int argmax2(double* list1,double* list2, int length);
 
 extern int msleep(long msec);
 
