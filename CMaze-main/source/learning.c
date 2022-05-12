@@ -103,7 +103,7 @@ void printQ(double** Q){
     printf("\n");
 }
 
-void train_one_epoch(double epsilon, double temperature, int training_mode){
+int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time){
     // Initialize starting position.
     maze_reset();
         
@@ -117,19 +117,18 @@ void train_one_epoch(double epsilon, double temperature, int training_mode){
     envOutput stepOut;
     
     // Run around in the maze!
-    while(!goal_reached(current_coord, done) && time < 500){ 
+    while(!goal_reached(current_coord, done) && time < max_time){ 
         //Choose movement.
         action action_chosen;
         if(training_mode == epsilon_greedy){
             action_chosen = rand_action_epsilon(Q, current_coord, epsilon);
-        } else {
-            if(training_mode == boltzmann_exploration){
+        } else if(training_mode == boltzmann_exploration){
                 action_chosen = rand_action_boltzmann_exploration(Q, current_coord, temperature);
-            } else {
+        } else {
                 printf("Training mode unrecognized in train_one_epoch.\n");
                 action_chosen = rand_action_uniform();
-            }
         }
+
         //Move.
         stepOut = maze_step(action_chosen);
         current_reward = stepOut.reward;
@@ -151,6 +150,14 @@ void train_one_epoch(double epsilon, double temperature, int training_mode){
         current_coord = new_coord;
         coord(current_coord, &state_row, &state_col);
         time++;
+    }
+    if (goal_reached(current_coord,done)){
+        return 1;
+    } else if (time>=max_time){
+        return 0;
+    } else {
+        printf("Error in train_one_epoch: invalid end of training for this epoch.\n");
+        return -1;
     }
 }
 
@@ -192,6 +199,7 @@ int main(){
         int training_mode = epsilon_greedy;
         printf("Training mode chosen: epsilon_greedy.\n");
         max_epoch = 500;
+        max_time = 500;
         current_epoch = 0;
         learning_rate = 0.1;
         discount_rate = 0.9;
@@ -206,7 +214,12 @@ int main(){
             maze_render();
         }
         
-        // TRAIN THE MODEL//
+        // END OF INITIALIZATION //
+
+
+
+
+        // TRAIN THE MODEL //
         printf("Press any key to start training.\n");
         
         getchar();
@@ -215,7 +228,7 @@ int main(){
             if(debug_mode>0){
                 printf("Current epoch: %d\nepsilon: %f, temperature: %f\n",current_epoch,epsilon,temperature);
             }
-            train_one_epoch(epsilon, temperature, training_mode);
+            train_one_epoch(epsilon, temperature, training_mode, max_time);
             
             reset_visited();
 

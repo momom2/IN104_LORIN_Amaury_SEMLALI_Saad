@@ -16,6 +16,7 @@ double discount_rate;	 	// discount rate
 double epsilon; 			// For epsilon-greedy learning, probability to explore.
 double temperature;         // Parameter for Boltzmann exploration.
 int max_epoch; 				// Total number of times the agent will play.
+int max_time;               // Maximum number of moves in one epoch.
 int current_epoch;	 		// Tracks the number of times the agent has played.
 	
 //extern int rows; 			// From mazeEnv.h
@@ -43,7 +44,7 @@ int goal_reached(int coordonnee, int done);
 void printQ(double** Q);
 
 // Update Q over one epoch of training, according to the chosen training mode.
-void train_one_epoch(double epsilon, double temperature, int training_mode);
+int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time);
 
 // RELEASE THE AGENT!
 int main();
