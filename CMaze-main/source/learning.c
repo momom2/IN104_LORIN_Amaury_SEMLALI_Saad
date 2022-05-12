@@ -126,6 +126,9 @@ void train_one_epoch(double epsilon, int training_mode){
         current_coord = new_coord;
         coord(current_coord, &state_row, &state_col);
         time++;
+        if(time>=500){
+        	printf("The goal is not reached\n");
+        }
     }
 }
 
