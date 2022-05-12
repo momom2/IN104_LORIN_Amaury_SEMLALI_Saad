@@ -1,7 +1,9 @@
+//double_q-learning
 #include "mazeEnv.h"
 #include "../include/functions.h"
-#include "learning.h"
+#include "double_q-learning.h"
 #include <time.h>
+#include <stdlib.h>
 //extern int rows;
 //extern int cols;
 
@@ -25,64 +27,42 @@ void add_crumbs(){
 void initQ(){
     printf("Initializing.\n");
     printf("Number of actions: %d\nNumber of rows: %d\nNumber of cols: %d\n", number_actions, rows, cols);
-    Q = malloc(rows*cols*sizeof(double*));
+    Q1 = malloc(rows*cols*sizeof(double*));
+    Q2 = malloc(rows*cols*sizeof(double*));
     for(int i = 0; i<rows; ++i){
         for(int j = 0; j<cols; ++j){
-            Q[case_coord(i,j)] = malloc(number_actions*sizeof(double));
+            Q1[case_coord(i,j)] = malloc(number_actions*sizeof(double));
+            Q2[case_coord(i,j)] = malloc(number_actions*sizeof(double));
         }
     }
     for(int k = 0; k<number_actions; ++k){
         for(int j = 0; j<cols; ++j) {
             for(int i = 0; i<rows; ++i){
-                Q[case_coord(i,j)][k]=0;
-                //printf("%d %d %f  ", i, j, Q[case_coord(i,j)][k]);
+                Q1[case_coord(i,j)][k]=0;
+                Q2[case_coord(i,j)][k]=0;
+                //printf("%d %d %f  ", i, j, Q1[case_coord(i,j)][k]);
+                //printf("%d %d %f  ", i, j, Q2[case_coord(i,j)][k]);
             }
             //printf("\n");
         }
     }
-    printf("Initialization of Q complete.\n");
+    printf("Initialization complete.\n");
 }
 
-void reset_result_table(){
-    for(int i=0;i<result_table_length;++i){
-        result_table[i]=0;
-    }
-    result_table[result_table_length] = 0;
-}
+
 
 action rand_action_uniform(){
     int random_choice = rand()%number_actions;
     return (action) random_choice;
 }
-action rand_action_epsilon(double** Q,int coordonnee, double epsilon){
+action rand_action_epsilon(double** Q1,double** Q2,int coordonnee, double epsilon){
     int temp_random_choice = rand()%10000;
     double random_choice = temp_random_choice/10000;
     if (random_choice<epsilon){ //Explore!
         return rand_action_uniform();
     } 
     else { //Remember.
-        return (action) argmax(Q[coordonnee],number_actions);
-    }
-}
-action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temperature){
-    double poids_max=somme(Q[coordonnee],number_actions,exponential,temperature);
-    // Choix de l'action aléatoirement
-    double random_chooser = randf(poids_max);
-    for(action a=up;a<number_actions;a++){
-        /////// WARNING: EXTREMELY VULNERABLE TO FLOAT ROUNDING ERRORS. TODO: REWRITE IN A MORE ROBUST WAY. //////
-        if(random_chooser<exponential(Q[coordonnee][a],temperature)){
-            return a;
-        } else {
-            random_chooser -= exponential(Q[coordonnee][a],temperature);
-        }
-    }
-    if(random_chooser>0){
-        printf("Error in rand_action_boltzmann_exploration. random_chooser too high.\n");
-        return up;
-    }
-    else {
-        printf("Error in rand_action_boltzmann_exploration. Didn't match properly.\n");
-        return right;
+        return (action) argmax2(Q1[coordonnee],Q2[coordonnee],number_actions);
     }
 }
 
@@ -108,7 +88,7 @@ void printQ(double** Q){
     printf("\n");
 }
 
-int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time){
+void train_one_epoch(double epsilon, int training_mode){
     // Initialize starting position.
     maze_reset();
         
@@ -122,18 +102,15 @@ int train_one_epoch(double epsilon, double temperature, int training_mode, int m
     envOutput stepOut;
     
     // Run around in the maze!
-    while(!goal_reached(current_coord, done) && time < max_time){ 
+    while(!goal_reached(current_coord, done) && time < 500){ 
         //Choose movement.
         action action_chosen;
         if(training_mode == epsilon_greedy){
-            action_chosen = rand_action_epsilon(Q, current_coord, epsilon);
-        } else if(training_mode == boltzmann_exploration){
-                action_chosen = rand_action_boltzmann_exploration(Q, current_coord, temperature);
+            action_chosen = rand_action_epsilon(Q1,Q2, current_coord, epsilon);
         } else {
-                printf("Training mode unrecognized in train_one_epoch.\n");
-                action_chosen = rand_action_uniform();
+            printf("Training mode unrecognized in train_one_epoch.\n");
+            action_chosen = rand_action_uniform();
         }
-
         //Move.
         stepOut = maze_step(action_chosen);
         current_reward = stepOut.reward;
@@ -142,9 +119,18 @@ int train_one_epoch(double epsilon, double temperature, int training_mode, int m
         new_col = stepOut.new_col;
         new_coord = case_coord(new_row,new_col);
         //printf("Tic.\n");
-        //Update Q.
-        //printf("Test: %f\n", Q[current_coord][a]);
-        Q[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q[new_coord],number_actions)) - Q[current_coord][action_chosen]);
+        //Update Q1,Q2.
+        //printf("Test: %f\n", Q1[current_coord][a]);
+        //printf("Test: %f\n", Q2[current_coord][a]);
+        
+        int choix=rand()%2;
+        printf("%d",choix);
+        if (choix==0){
+        	Q1[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q2[new_coord],number_actions)) - Q1[current_coord][action_chosen]);
+        }
+        else{
+        	Q2[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q1[new_coord],number_actions)) - Q2[current_coord][action_chosen]);
+        }
         //printf("Toc.\n");
 
         coord(current_coord, &state_row, &state_col);
@@ -155,17 +141,6 @@ int train_one_epoch(double epsilon, double temperature, int training_mode, int m
         current_coord = new_coord;
         coord(current_coord, &state_row, &state_col);
         time++;
-        if(time>=500){
-        	printf("The goal is not reached\n");
-        }
-    }
-    if (goal_reached(current_coord,done)){
-        return 1;
-    } else if (time>=max_time){
-        return 0;
-    } else {
-        printf("Error in train_one_epoch: invalid end of training for this epoch.\n");
-        return -1;
     }
 }
 
@@ -174,7 +149,7 @@ int main(){
     srand(time(NULL));
     // IF test_mode IS SET TO 1, NO AGENT WILL BE SPAWNED NOR TRAINED. 
     int test_mode = 0;
-    // debug_mode ACTIVATES A FEW printfS HERE AND THERE. The bigger, the more, like a verbose mode! 
+    // debug_mode ACTIVATES A FEW printfS HERE AND THERE. The bigger, the more! 
     int debug_mode = 1;
 
     // INITIALIZATION
@@ -204,85 +179,70 @@ int main(){
             }
         }
 
-        int training_mode = boltzmann_exploration;                  // No current way to display the training mode automatically.
-        printf("Training mode chosen: boltzmann_exploration.\n");   // Be sure to edit it if you change the training mode.
-        max_epoch = 500;
-        max_time = 500;
+        int training_mode = epsilon_greedy;
+        max_epoch = 1400;
         current_epoch = 0;
         learning_rate = 0.1;
         discount_rate = 0.9;
         epsilon = 1; // Epsilon gets decreased as epochs go.
-        temperature = 1; // Temperature gets decreased as epochs go.
-        // In fact, epsilon and temperature are always the same values, but they are used for different things. They are a sacrifice I am willing to make.
         printf("sleeping time: %ld\n",sleeping_time);
         initQ();
         
         if(debug_mode>2){
-            printQ(Q);
+            printQ(Q1);
+            printQ(Q2);
             maze_render();
         }
         
-        // END OF INITIALIZATION //
-
-
-
-
-        // TRAIN THE MODEL //
-        printf("Press any key to start training.\n");
+        // TRAIN THE MODEL//
+        printf("Enter to start training.\n");
         
         getchar();
+
         while(current_epoch<max_epoch){
-            if(debug_mode>0){
-                printf("Current epoch: %d\nepsilon: %f, temperature: %f\n",current_epoch,epsilon,temperature);
-            }
-            result_table[current_epoch%result_table_length] = train_one_epoch(epsilon, temperature, training_mode, max_time);
-            result_table[result_table_length] = current_epoch;
+            printf("Current epoch: %d\n",current_epoch);
+            train_one_epoch(epsilon, training_mode);
             reset_visited();
 
             if(debug_mode>1){
-                printQ(Q);
+                printQ(Q1);
+                printQ(Q2);
             }
             msleep(sleeping_time);
             current_epoch++;
-            epsilon = maxf(0.95*epsilon,0.01);
-            temperature = maxf(0.95*temperature,0.01);
+            epsilon = 0.95*epsilon;
         }
     }
 
-    //////////// TEST ZONE. ////////////
+    // TEST ZONE.
     if(test_mode){
-        //int is_random = 0;
-
-        
         //crash_visited();
-        //test_somme(is_random);
-        //test_envOutput(is_random);
+        int is_random = 0;
+        test_envOutput(is_random);
         //test_rand();
-        test_randf();
         //test_coord_converter();
     }
-    ////////////////////////////////////
+    
 
     if(!test_mode){
-        printf("Results of the training.\nPress any key to display.\n");
+        printf("Résultat de recherche par apprentissage.\nAppuyer sur une touche pour afficher.\n");
         getchar();
         
 
         ////////////////////
         if(debug_mode>0){
-            printQ(Q);
+            printQ(Q1);
+            printQ(Q2);
             /*printf("Length of visited: %lux%lu\nLength of maze: %lux%lu\nLength of Q: %lux%lu\n", \
                 ARRAY_LENGTH(visited),ARRAY_LENGTH(visited[0]),                             \
                 ARRAY_LENGTH(maze),ARRAY_LENGTH(maze[0]),                                   \
                 ARRAY_LENGTH(Q),ARRAY_LENGTH(Q[0]));
             */ // Dysfunctional code; ARRAY_LENGTH only works on static arrays.
             maze_render();
-        }
-        if(debug_mode>1){
             print_visited();
         }
-        printf("The end.\nHope you enjoyed it! ^-^\n");
-        
+        printf("Fin.\n");
+
         // Free everything. Information wants to be free, and so do mice!
         quit();
     }
@@ -300,7 +260,8 @@ void quit(){
         //printf("%d",cols);
         //printf("Tic.\n");
         for(int j = 0; j<cols; ++j){
-            free(Q[case_coord(i,j)]);
+            free(Q1[case_coord(i,j)]);
+            free(Q2[case_coord(i,j)]);
         }
     } 
     printf("Agent terminated.\n");
