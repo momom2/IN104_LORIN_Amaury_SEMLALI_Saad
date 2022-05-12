@@ -59,6 +59,27 @@ action rand_action_epsilon(double** Q,int coordonnee, double epsilon){
         return (action) argmax(Q[coordonnee],number_actions);
     }
 }
+action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temperature){
+    double poids_max=somme(Q[coordonnee],number_actions,exponential,temperature);
+    // Choix de l'action aléatoirement
+    double random_chooser = randf(poids_max);
+    for(action a=up;a<number_actions;a++){
+        /////// WARNING: EXTREMELY VULNERABLE TO FLOAT ROUNDING ERRORS. TODO: REWRITE IN A MORE ROBUST WAY. //////
+        if(random_chooser<exponential(Q[coordonnee][a],temperature)){
+            return a;
+        } else {
+            random_chooser -= exponential(Q[coordonnee][a],temperature);
+        }
+    }
+    if(random_chooser>0){
+        printf("Error in rand_action_boltzmann_exploration. random_chooser too high.\n");
+        return up;
+    }
+    else {
+        printf("Error in rand_action_boltzmann_exploration. Didn't match properly.\n");
+        return right;
+    }
+}
 
 int goal_reached(int coordonnee, int done){
     int goal_coord = case_coord(goal_row, goal_col);
@@ -82,7 +103,7 @@ void printQ(double** Q){
     printf("\n");
 }
 
-void train_one_epoch(double epsilon, int training_mode){
+int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time){
     // Initialize starting position.
     maze_reset();
         
@@ -96,15 +117,18 @@ void train_one_epoch(double epsilon, int training_mode){
     envOutput stepOut;
     
     // Run around in the maze!
-    while(!goal_reached(current_coord, done) && time < 500){ 
+    while(!goal_reached(current_coord, done) && time < max_time){ 
         //Choose movement.
         action action_chosen;
         if(training_mode == epsilon_greedy){
             action_chosen = rand_action_epsilon(Q, current_coord, epsilon);
+        } else if(training_mode == boltzmann_exploration){
+                action_chosen = rand_action_boltzmann_exploration(Q, current_coord, temperature);
         } else {
-            printf("Training mode unrecognized in train_one_epoch.\n");
-            action_chosen = rand_action_uniform();
+                printf("Training mode unrecognized in train_one_epoch.\n");
+                action_chosen = rand_action_uniform();
         }
+
         //Move.
         stepOut = maze_step(action_chosen);
         current_reward = stepOut.reward;
@@ -130,14 +154,22 @@ void train_one_epoch(double epsilon, int training_mode){
         	printf("The goal is not reached\n");
         }
     }
+    if (goal_reached(current_coord,done)){
+        return 1;
+    } else if (time>=max_time){
+        return 0;
+    } else {
+        printf("Error in train_one_epoch: invalid end of training for this epoch.\n");
+        return -1;
+    }
 }
 
 int main(){
     
-
+    srand(time(NULL));
     // IF test_mode IS SET TO 1, NO AGENT WILL BE SPAWNED NOR TRAINED. 
     int test_mode = 0;
-    // debug_mode ACTIVATES A FEW printfS HERE AND THERE. The bigger, the more! 
+    // debug_mode ACTIVATES A FEW printfS HERE AND THERE. The bigger, the more, like a verbose mode! 
     int debug_mode = 1;
 
     // INITIALIZATION
@@ -168,11 +200,15 @@ int main(){
         }
 
         int training_mode = epsilon_greedy;
-        max_epoch = 10000;
+        printf("Training mode chosen: epsilon_greedy.\n");
+        max_epoch = 500;
+        max_time = 500;
         current_epoch = 0;
         learning_rate = 0.1;
         discount_rate = 0.9;
         epsilon = 1; // Epsilon gets decreased as epochs go.
+        temperature = 1; // Temperature gets decreased as epochs go.
+        // In fact, epsilon and temperature are always the same values, but they are used for different things. They are a sacrifice I am willing to make.
         printf("sleeping time: %ld\n",sleeping_time);
         initQ();
         
@@ -181,14 +217,22 @@ int main(){
             maze_render();
         }
         
-        // TRAIN THE MODEL//
-        printf("Enter to start training.\n");
+        // END OF INITIALIZATION //
+
+
+
+
+        // TRAIN THE MODEL //
+        printf("Press any key to start training.\n");
         
         getchar();
 
         while(current_epoch<max_epoch){
-            printf("Current epoch: %d\n",current_epoch);
-            train_one_epoch(epsilon, training_mode);
+            if(debug_mode>0){
+                printf("Current epoch: %d\nepsilon: %f, temperature: %f\n",current_epoch,epsilon,temperature);
+            }
+            train_one_epoch(epsilon, temperature, training_mode, max_time);
+            
             reset_visited();
 
             if(debug_mode>1){
@@ -196,23 +240,27 @@ int main(){
             }
             msleep(sleeping_time);
             current_epoch++;
-            epsilon = 0.95*epsilon;
+            epsilon = maxf(0.95*epsilon,0.01);
+            temperature = maxf(0.95*temperature,0.01);
         }
     }
 
-    // TEST ZONE.
+    //////////// TEST ZONE. ////////////
     if(test_mode){
-        srand(time(NULL));
+        //int is_random = 0;
+
+        
         //crash_visited();
-        int is_random = 0;
-        test_envOutput(is_random);
+        //test_somme(is_random);
+        //test_envOutput(is_random);
         //test_rand();
+        test_randf();
         //test_coord_converter();
     }
-    
+    ////////////////////////////////////
 
     if(!test_mode){
-        printf("Résultat de recherche par apprentissage.\nAppuyer sur une touche pour afficher.\n");
+        printf("Results of the training.\nPress any key to display.\n");
         getchar();
         
 
@@ -225,10 +273,12 @@ int main(){
                 ARRAY_LENGTH(Q),ARRAY_LENGTH(Q[0]));
             */ // Dysfunctional code; ARRAY_LENGTH only works on static arrays.
             maze_render();
+        }
+        if(debug_mode>1){
             print_visited();
         }
-        printf("Fin.\n");
-
+        printf("The end. Hope you enjoyed it! ^-^\n");
+        
         // Free everything. Information wants to be free, and so do mice!
         quit();
     }
@@ -252,18 +302,3 @@ void quit(){
     printf("Agent terminated.\n");
 }
 
-int boltzman_exploration(int* i, int* j, float** Q){
-    //Génération des poids
-        // Calcul de l'exponentielle de chaque action
-    poids_max=somme(Q[case_coord(i,j)]),nombre_actions,exp);
-        //calcul du nombre de décimales du poids max
-    
-    //Choix de l'action aléatoirement
-    srand(time(NULL)); //use current time as seed for random generator
-    double action_choisie = rand()%(poids_max*10000)/10000;
-    for(int i=0;i<nombre_actions;i++){
-       if(action_choisie>exp(Q[case_coord(i,j)][i]&&action_choisie<somme(Q[case_coord(i,j)]),i+1,exp)){
-        action_choisie=i;
-        } 
-    return action_choisie
-    }

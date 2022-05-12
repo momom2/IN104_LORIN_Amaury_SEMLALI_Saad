@@ -345,6 +345,8 @@ void crash_visited(){
 
 
 void quit_maze(){
+    printf("Appuyer sur une touche pour terminer.\n");
+    getchar();
     for(int i=0; i<rows; i++) {
         free(maze[i]);
     }

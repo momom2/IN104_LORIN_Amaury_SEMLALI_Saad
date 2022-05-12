@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Werror -lm
+# Pas de CFLAGS, déjà en alias dans bashrc : -Wall -Werror ??? A vérifier : bashrc bizarre...
 INC = -Iinclude/
 SRC = source/
 #$(info EXEC before = $(EXEC))
@@ -28,14 +29,6 @@ dfs : $(SRC)dfs.o $(SRC)functions.o $(SRC)mazeEnv.o
 	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
 
 learning : $(SRC)learning.o $(SRC)functions.o $(SRC)mazeEnv.o
-	
-	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
-
-double_learning : $(SRC)double_q-learning.o $(SRC)functions.o $(SRC)mazeEnv.o
-	
-	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
-
-sarsa : $(SRC)sarsa.o $(SRC)functions.o $(SRC)mazeEnv.o
 	
 	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
 
