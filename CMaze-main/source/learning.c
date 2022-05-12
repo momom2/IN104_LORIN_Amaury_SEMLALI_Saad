@@ -40,10 +40,15 @@ void initQ(){
             //printf("\n");
         }
     }
-    printf("Initialization complete.\n");
+    printf("Initialization of Q complete.\n");
 }
 
-
+void reset_result_table(){
+    for(int i=0;i<result_table_length;++i){
+        result_table[i]=0;
+    }
+    result_table[result_table_length] = 0;
+}
 
 action rand_action_uniform(){
     int random_choice = rand()%number_actions;
@@ -196,8 +201,8 @@ int main(){
             }
         }
 
-        int training_mode = epsilon_greedy;
-        printf("Training mode chosen: epsilon_greedy.\n");
+        int training_mode = boltzmann_exploration;                  // No current way to display the training mode automatically.
+        printf("Training mode chosen: boltzmann_exploration.\n");   // Be sure to edit it if you change the training mode.
         max_epoch = 500;
         max_time = 500;
         current_epoch = 0;
@@ -223,13 +228,12 @@ int main(){
         printf("Press any key to start training.\n");
         
         getchar();
-
         while(current_epoch<max_epoch){
             if(debug_mode>0){
                 printf("Current epoch: %d\nepsilon: %f, temperature: %f\n",current_epoch,epsilon,temperature);
             }
-            train_one_epoch(epsilon, temperature, training_mode, max_time);
-            
+            result_table[current_epoch%result_table_length] = train_one_epoch(epsilon, temperature, training_mode, max_time);
+            result_table[result_table_length] = current_epoch;
             reset_visited();
 
             if(debug_mode>1){
@@ -274,7 +278,7 @@ int main(){
         if(debug_mode>1){
             print_visited();
         }
-        printf("The end. Hope you enjoyed it! ^-^\n");
+        printf("The end.\nHope you enjoyed it! ^-^\n");
         
         // Free everything. Information wants to be free, and so do mice!
         quit();

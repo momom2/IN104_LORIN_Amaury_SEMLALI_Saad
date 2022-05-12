@@ -107,7 +107,6 @@ int msleep(long msec){
 
     return res;
 }
-<<<<<<< HEAD
 
 
 /* ///// OBSOLETE CODE, DOES NOT WORK. TODO: REIMPLEMENT SOMME CLEANLY, BASED ON THIS.
@@ -183,5 +182,17 @@ void test_somme(int random){
         
     }
 }
-=======
->>>>>>> 3ebc2c9adc52b346240585d62e9305c639558d31
+
+void print_latest_results(result_table, result_table_length){
+    int sum = 0;
+    for(int i=0;i<result_table_length;++i){
+        result = result_table[i];
+        if(result != 1 && result != 0){
+            printf("Error: invalid result_table in print_latest_results.\n");
+        } else {
+            sum += result;
+        }
+    double winrate = (double) sum/result_table_length;
+    printf("Win rate: %2f\n",winrate);
+    }
+}

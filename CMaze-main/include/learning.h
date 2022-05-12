@@ -1,6 +1,8 @@
 #ifndef LEARNING_H
 #define LEARNING_H
 
+#define RESULT_TABLE_LENGTH 100
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,6 +20,8 @@ double temperature;         // Parameter for Boltzmann exploration.
 int max_epoch; 				// Total number of times the agent will play.
 int max_time;               // Maximum number of moves in one epoch.
 int current_epoch;	 		// Tracks the number of times the agent has played.
+const int result_table_length = RESULT_TABLE_LENGTH;
+int result_table[RESULT_TABLE_LENGTH+1];      // Tracks the results of the last hundred epochs + the number of the last epoch recorded.
 	
 //extern int rows; 			// From mazeEnv.h
 //extern int cols; 			// From mazeEnv.h
@@ -30,7 +34,7 @@ enum training_mode{
 
 // Allocate Q and initialize constants for training.
 void initQ(); 				
-
+void reset_success_rate();
 // Choose a random action.
 action rand_action_uniform();
 
