@@ -14,7 +14,7 @@ double** Q; 				// Q-table Q[rows*cols][number_actions]
 double** Q1;    
 double** Q2;
 
-// No reward table, it is implicit in maze_step.
+// No reward table, it is implicit in graph_step.
 
 double learning_rate; 		// learning rate
 double discount_rate;	 	// discount rate
@@ -27,19 +27,18 @@ int current_epoch;	 		// Tracks the number of times the agent has played.
 const int result_table_length = RESULT_TABLE_LENGTH;
 int result_table[RESULT_TABLE_LENGTH+1];      // Tracks the results of the last hundred epochs + the number of the last epoch recorded.
 	
-//extern int rows; 			// From mazeEnv.h
-//extern int cols; 			// From mazeEnv.h
+//extern int size; 			// From mazeEnv.h
 
 enum training_mode{
+    number_training_modes,  // Modes after this are not implemented - yet.
     epsilon_greedy,
     boltzmann_exploration,
-    number_training_modes, 	// Modes after this are not implemented - yet.
 };
 enum learning_type{
+    number_learning_types,  // Types after this are not implemented - yet.
     simple_learning,
     double_learning,
     sarsa_learning,
-    number_learning_types,  // Types after this are not implemented - yet.
 };
 
 // Allocate Q and initialize constants for training.

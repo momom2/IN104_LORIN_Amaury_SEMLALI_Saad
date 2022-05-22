@@ -31,6 +31,10 @@ maze_learning : $(SRC)maze_learning.o $(SRC)functions.o $(SRC)mazeEnv.o
 	
 	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
 
+graph_learning : $(SRC)graph_learning.o $(SRC)functions.o $(SRC)graphEnv.o
+	
+	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
+
 
 sarsa : $(SRC)sarsa.o $(SRC)functions.o $(SRC)mazeEnv.o
 	

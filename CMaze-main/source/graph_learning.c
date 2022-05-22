@@ -1,6 +1,6 @@
-#include "../include/mazeEnv.h"
+#include "graphEnv.h"
 #include "../include/functions.h"
-#include "../include/maze_learning.h"
+#include "graph_learning.h"
 #include <time.h>
 
 /*  ///  LEGACY CODE  ///
@@ -21,56 +21,50 @@ void add_crumbs(){
 void initQ(int debug_mode){
     printf("Initializing Q.\n");
     if(debug_mode>0){
-        printf("Number of actions: %d\nNumber of rows: %d\nNumber of cols: %d\n", number_actions, rows, cols);
+        printf("Number of actions: %d\nSize of graph:\n", number_actions, size);
     }
-    Q = malloc(rows*cols*sizeof(double*));
-    for(int i = 0; i<rows; ++i){
-        for(int j = 0; j<cols; ++j){
-            Q[case_coord(i,j)] = malloc(number_actions*sizeof(double));
-        }
+    Q = malloc(size*sizeof(double*));
+    for(int i = 0; i<size; ++i){
+        Q[i] = malloc(number_actions*sizeof(double));
     }
-    for(int k = 0; k<number_actions; ++k){
-        for(int j = 0; j<cols; ++j) {
-            for(int i = 0; i<rows; ++i){
-                Q[case_coord(i,j)][k]=0;
-                if(debug_mode>2){
-                    printf("%d %d %f  ", i, j, Q[case_coord(i,j)][k]);
-                }
+    for(int a = 0; a<number_actions; ++k){
+        for(int i = 0; i<size; ++i) {
+            Q[i][a]=0;
+            if(debug_mode>2){
+                printf("%d %.2f  ", i, Q[i][a]);
             }
-            if(debug_mode>2){printf("\n");}
         }
+        if(debug_mode>2){printf("\n");}
     }
     printf("Initialization of Q complete.\n");
 }
 void initQ2(int debug_mode){
     printf("Initializing Q1 and Q2.\n");
     if(debug_mode>0){
-        printf("Number of actions: %d\nNumber of rows: %d\nNumber of cols: %d\n", number_actions, rows, cols);
+        printf("Number of actions: %d\nSize of graph:\n", number_actions, size);
     }
-    Q1 = malloc(rows*cols*sizeof(double*));
-    Q2 = malloc(rows*cols*sizeof(double*));
-    for(int i = 0; i<rows; ++i){
-        for(int j = 0; j<cols; ++j){
-            Q1[case_coord(i,j)] = malloc(number_actions*sizeof(double));
-            Q2[case_coord(i,j)] = malloc(number_actions*sizeof(double));
-        }
+    Q1 = malloc(size*sizeof(double*));
+    Q2 = malloc(size*sizeof(double*));
+    for(int i = 0; i<size; ++i){
+        Q1[i] = malloc(number_actions*sizeof(double));
+        Q2[i] = malloc(number_actions*sizeof(double));
+        
     }
-    for(int k = 0; k<number_actions; ++k){
-        for(int j = 0; j<cols; ++j) {
-            for(int i = 0; i<rows; ++i){
-                Q1[case_coord(i,j)][k]=0;
-                Q2[case_coord(i,j)][k]=0;
-                if(debug_mode>2){ // Poor implementation. TODO: rewrite it correctly.
-                    printf("%d %d %f  ", i, j, Q1[case_coord(i,j)][k]);
-                    printf("%d %d %f  ", i, j, Q2[case_coord(i,j)][k]); 
-                }
+    for(int a = 0; a<number_actions; ++k){
+        for(int i = 0; i<size; ++i) {
+            Q1[i][a]=0;
+            Q2[i][a]=0;
+            if(debug_mode>2){ // Poor implementation. TODO: rewrite it correctly.
+                printf("%d %.2f  ", i, Q1[i][a]);
+                printf("%d %.2f  ", i, Q2[i][a]); 
             }
-            if(debug_mode>2){printf("\n");}
         }
+        if(debug_mode>2){printf("\n");}
     }
     printf("Initialization of Q1 and Q2 complete.\n");
 }
 
+//////////////////////////////////////////////// TODO: REWRITE EVERYTHING BELOW.
 
 
 

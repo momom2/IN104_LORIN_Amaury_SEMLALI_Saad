@@ -13,16 +13,15 @@ void alloc_maze(){
 
 void maze_make(char* file_name){
      printf("Creating maze...\n");
-     //printf("Begin maze_make.\n");
      char c;
-     char rows_s[3] ={'\0'};
-     char cols_s[3] ={'\0'};
+     char rows_s[9] ={'\0'};
+     char cols_s[9] ={'\0'};
      int rows_i = 0;
      int cols_i = 0;
      int swap = 0;
      //printf("Opening file %s.\n", file_name);
      FILE* file = fopen(file_name, "r");
-     if (file == NULL) {printf("Error: fopen failed.\n");}
+     if (file == NULL) {printf("Error in maze_make: fopen failed.\n");}
      //printf("File opened.\n");
      if (file) {
          /* lire la premiere ligne avant EOF */
@@ -202,8 +201,8 @@ char graphical_move(int action){
 }
 
 
-void test_envOutput(int random){
-    printf("Test de envOutput.\n");
+void test_maze_step(int random){
+    printf("Test de maze_step.\n");
     action a;
     int temp_state_row;
     int temp_state_col;
@@ -236,7 +235,7 @@ void test_envOutput(int random){
     
     printf("Fin du test.\n");
 }
-//test_envOutput();
+//test_maze_step();
 
 int rand_col(){
     return (rand() % cols);
