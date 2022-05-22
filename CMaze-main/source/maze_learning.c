@@ -1,6 +1,6 @@
 #include "mazeEnv.h"
 #include "../include/functions.h"
-#include "learning.h"
+#include "maze_learning.h"
 #include <time.h>
 
 /*  ///  LEGACY CODE  ///
@@ -118,11 +118,11 @@ action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temp
         }
     }
     if(random_chooser>0){
-        printf("Error in rand_action_boltzmann_exploration. random_chooser too high.\n");
+        printf("Warning in rand_action_boltzmann_exploration: random_chooser too high.\n");
         return up;
     }
     else {
-        printf("Error in rand_action_boltzmann_exploration. Didn't match properly.\n");
+        printf("Warning in rand_action_boltzmann_exploration: didn't match properly.\n");
         return right;
     }
 }
@@ -145,12 +145,12 @@ action rand_action_boltzmann_exploration2(double** Q1, double** Q2, int coordonn
         }
     }
     if(random_chooser>0){
-        printf("Error in rand_action_boltzmann_exploration. random_chooser too high.\n");
+        printf("Warning in rand_action_boltzmann_exploration: random_chooser too high.\n");
         free(liste);
         return up;
     }
     else {
-        printf("Error in rand_action_boltzmann_exploration. Didn't match properly.\n");
+        printf("Warning in rand_action_boltzmann_exploration: didn't match properly.\n");
         free(liste);
         return right;
     }
@@ -162,7 +162,7 @@ int goal_reached(int coordonnee, int done){
         if (done == 1) {
             return 1;
         }
-        printf("Error: information inconsistent between done and coordonnee.\n");
+        printf("Warning in goal_reached: information inconsistent between done and coordonnee.\n");
     }
     return 0;
 }
@@ -178,13 +178,14 @@ void printQ(double** Q){
     printf("\n");
 }
 
-int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
+int train_one_epoch(double** Q, double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
     // Initialize starting position.
     maze_reset();
         
     int time = 0;
     double current_reward;
     int current_coord = case_coord(state_row,state_col);
+    action action_chosen;
     int new_row;
     int new_col;
     int new_coord;
@@ -194,14 +195,13 @@ int train_one_epoch(double epsilon, double temperature, int training_mode, int m
     // Run around in the maze!
     while(!goal_reached(current_coord, done) && time < max_time){ 
         //Choose movement.
-        action action_chosen;
         if(training_mode == epsilon_greedy){
             action_chosen = rand_action_epsilon(Q, current_coord, epsilon);
         } else if(training_mode == boltzmann_exploration){
-                action_chosen = rand_action_boltzmann_exploration(Q, current_coord, temperature);
+            action_chosen = rand_action_boltzmann_exploration(Q, current_coord, temperature);
         } else {
-                printf("Training mode unrecognized in train_one_epoch.\n");
-                action_chosen = rand_action_uniform();
+            printf("Warning in train_one_epoch: training_mode unrecognized.\n");
+            action_chosen = rand_action_uniform();
         }
 
         //Move.
@@ -233,17 +233,18 @@ int train_one_epoch(double epsilon, double temperature, int training_mode, int m
         printf("The goal is not reached.\n");
         return 0;
     } else {
-        printf("Error in train_one_epoch: invalid end of training for this epoch.\n");
+        printf("Warning in train_one_epoch: invalid end of training for this epoch.\n");
         return -1;
     }
 }
-int train_one_epoch2(double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
+int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
     // Initialize starting position.
     maze_reset();
         
     int time = 0;
     double current_reward;
     int current_coord = case_coord(state_row,state_col);
+    action action_chosen;
     int new_row;
     int new_col;
     int new_coord;
@@ -253,14 +254,13 @@ int train_one_epoch2(double epsilon, double temperature, int training_mode, int 
     // Run around in the maze!
     while(!goal_reached(current_coord, done) && time < max_time){ 
         //Choose movement.
-        action action_chosen;
         if(training_mode == epsilon_greedy){
             action_chosen = rand_action_epsilon2(Q1, Q2, current_coord, epsilon);
         } else if(training_mode == boltzmann_exploration){
-                action_chosen = rand_action_boltzmann_exploration2(Q1, Q2, current_coord, temperature);
+            action_chosen = rand_action_boltzmann_exploration2(Q1, Q2, current_coord, temperature);
         } else {
-                printf("Error in train_one_epoch2: training mode unrecognized.\n");
-                action_chosen = rand_action_uniform();
+            printf("Warning in train_one_epoch2: training mode unrecognized.\n");
+            action_chosen = rand_action_uniform();
         }
 
         //Move.
@@ -304,7 +304,77 @@ int train_one_epoch2(double epsilon, double temperature, int training_mode, int 
         printf("The goal is not reached.\n");
         return 0;
     } else {
-        printf("Error in train_one_epoch2: invalid end of training for this epoch.\n");
+        printf("Warning in train_one_epoch2: invalid end of training for this epoch.\n");
+        return -1;
+    }
+}
+int train_one_epochSARSA(double** Q, double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
+    // Initialize starting position.
+    maze_reset();
+        
+    int time = 0;
+    double current_reward;
+    int current_coord = case_coord(state_row,state_col);
+    action action_chosen; 
+    int new_row;
+    int new_col;
+    int new_coord;
+    int done = 0;
+    envOutput stepOut;
+    action new_action_chosen;
+
+    // Consider movement.
+    if(training_mode == epsilon_greedy){
+        action_chosen = rand_action_epsilon(Q, current_coord, epsilon);
+    } else if(training_mode == boltzmann_exploration){
+        action_chosen = rand_action_boltzmann_exploration(Q, current_coord, temperature);
+    } else {
+        printf("Warning in train_one_epochSARSA: training_mode unrecognized.\n");
+        action_chosen = rand_action_uniform();
+    }
+    
+    // Run around in the maze!
+    while(!goal_reached(current_coord, done) && time < max_time){ 
+        //Move.
+        stepOut = maze_step(action_chosen);
+        current_reward = stepOut.reward;
+        done= stepOut.done;
+        new_row = stepOut.new_row;
+        new_col = stepOut.new_col;
+        new_coord = case_coord(new_row,new_col);
+        // Choose movement.
+        if(training_mode == epsilon_greedy){
+            new_action_chosen = rand_action_epsilon(Q, new_coord, epsilon);
+        } else if(training_mode == boltzmann_exploration){
+            new_action_chosen = rand_action_boltzmann_exploration(Q, new_coord, temperature);
+        } else {
+            printf("Warning in train_one_epochSARSA: training_mode unrecognized.\n");
+            new_action_chosen = rand_action_uniform();
+        }
+
+        //Update Q.
+        if(debug_mode>3){
+            printf("Test: %f\n", Q[current_coord][action_chosen]);
+        }
+        Q[current_coord][action_chosen] += learning_rate*(current_reward + (discount_rate*Q[new_coord][new_action_chosen]) - Q[current_coord][action_chosen]);
+
+        coord(current_coord, &state_row, &state_col);
+        if(visited[state_row][state_col] == unknown){
+            visited[state_row][state_col] = known;
+        }
+
+        current_coord = new_coord;
+        action_chosen = new_action_chosen;
+        coord(current_coord, &state_row, &state_col);
+        time++;
+    }
+    if (goal_reached(current_coord,done)){
+        return 1;
+    } else if (time>=max_time){
+        printf("The goal is not reached.\n");
+        return 0;
+    } else {
+        printf("Warning in train_one_epoch: invalid end of training for this epoch.\n");
         return -1;
     }
 }
@@ -319,10 +389,10 @@ int main(){
     ////////////// INITIALIZATION //////////////
     maze_make("maze.txt");
     init_visited();
-    int training_mode = epsilon_greedy;                  // No current way to display the training mode automatically.
-    int learning_type = double_learning;                 // Idem.
-    printf("Training mode chosen: epsilon_greedy.\n");   // Be sure to edit it if you change the training mode.
-    printf("Learning type chosen: double.\n");           // Idem.
+    int training_mode = boltzmann_exploration;                  // No current way to display the training mode automatically.
+    int learning_type = sarsa_learning;                 // Idem.
+    printf("Training mode chosen: Boltzmann exploration.\n");   // Be sure to edit it if you change the training mode.
+    printf("Learning type chosen: SARSA.\n");           // Idem.
         
     if (!test_mode) {
 
@@ -343,7 +413,7 @@ int main(){
                 sleeping_time = 0;
             }
             if(sleeping_time<0 || sleeping_time>200){
-                printf("Good try.\n");
+                printf("Nice try! 0_°\n");
                 sleeping_time = 000;
             }
         }
@@ -356,24 +426,24 @@ int main(){
         epsilon = 1; // Epsilon gets decreased as epochs go.
         temperature = 1; // Temperature gets decreased as epochs go.
         // In fact, epsilon and temperature are always the same values as implemented here, but they are used for different things.
-        max_super_winrate = 50;
+        max_super_winrate = 1;
         printf("sleeping time: %ld\n",sleeping_time);
-        if(learning_type == simple_learning){
+        if(learning_type == simple_learning || learning_type == sarsa_learning){
             initQ(debug_mode);
         } else if(learning_type == double_learning){
             initQ2(debug_mode);
         } else {
-            printf("Error during Q initialization: unsupported learning_type.\n");
+            printf("Warning during Q initialization: unsupported learning_type.\n");
         }
         
         if(debug_mode>2){
-            if(learning_type == simple_learning){
+            if(learning_type == simple_learning || learning_type == sarsa_learning){
                 printQ(Q);
             } else if(learning_type == double_learning){
                 printQ(Q1);
                 printQ(Q2);
             } else {
-                printf("Error during Q initialization: unsupported learning_type.\n");
+                printf("Warning during Q initialization: unsupported learning_type.\n");
             }
             maze_render();
         }
@@ -395,11 +465,13 @@ int main(){
             }
             reset_visited();
             if(learning_type == simple_learning){
-                result_table[current_epoch%result_table_length] = train_one_epoch(epsilon, temperature, training_mode, max_time, debug_mode);
+                result_table[current_epoch%result_table_length] = train_one_epoch(Q, epsilon, temperature, training_mode, max_time, debug_mode);
             } else if(learning_type == double_learning){
-                result_table[current_epoch%result_table_length] = train_one_epoch2(epsilon, temperature, training_mode, max_time, debug_mode);
+                result_table[current_epoch%result_table_length] = train_one_epoch2(Q1, Q2, epsilon, temperature, training_mode, max_time, debug_mode);
+            } else if(learning_type == sarsa_learning){
+                result_table[current_epoch%result_table_length] = train_one_epochSARSA(Q, epsilon, temperature, training_mode, max_time, debug_mode);
             } else {
-                printf("Error during training: unsupported learning_type.\n");
+                printf("Warning during training: unsupported learning_type.\n");
             }
             result_table[result_table_length] = current_epoch;
             
@@ -411,7 +483,7 @@ int main(){
                     printQ(Q1);
                     printQ(Q2);
                 } else {
-                    printf("Error during training: unsupported learning_type.\n");
+                    printf("Warning during training: unsupported learning_type.\n");
                 }
                 
             }
@@ -454,13 +526,13 @@ int main(){
         ////////////////////
         if(debug_mode>0){
 
-            if(learning_type == simple_learning){
+            if(learning_type == simple_learning || learning_type == sarsa_learning){
                 printQ(Q);
             } else if(learning_type == double_learning){
                 printQ(Q1);
                 printQ(Q2);
             } else {
-                printf("Error in result display: unsupported learning_type.\n");
+                printf("Warning in result display: unsupported learning_type.\n");
             }
             maze_render();
         }
@@ -470,12 +542,12 @@ int main(){
         printf("The end.\nHope you enjoyed it! ^-^\n");
         
         // Free everything. Information wants to be free, and so do mice!
-        if(learning_type == simple_learning){
+        if(learning_type == simple_learning || learning_type == sarsa_learning){
             quit(debug_mode);
         } else if(learning_type == double_learning){
             quit2(debug_mode);
         } else {
-            printf("Error when quitting: unsupported learning_type.\n");
+            printf("Warning when quitting: unsupported learning_type.\n");
         }
         
     }

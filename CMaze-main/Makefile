@@ -10,7 +10,7 @@ DIRECTORY = ~/ # Make sure you're in the right directory!
 #$(info DIRECTORY after = $(DIRECTORY))
 
 
-all : dfs learning
+all : dfs maze_learning
 
 
 clean :
@@ -27,13 +27,10 @@ dfs : $(SRC)dfs.o $(SRC)functions.o $(SRC)mazeEnv.o
 	
 	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
 
-learning : $(SRC)learning.o $(SRC)functions.o $(SRC)mazeEnv.o
+maze_learning : $(SRC)maze_learning.o $(SRC)functions.o $(SRC)mazeEnv.o
 	
 	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
 
-double_learning : $(SRC)double_qlearning.o $(SRC)functions.o $(SRC)mazeEnv.o
-	
-	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
 
 sarsa : $(SRC)sarsa.o $(SRC)functions.o $(SRC)mazeEnv.o
 	

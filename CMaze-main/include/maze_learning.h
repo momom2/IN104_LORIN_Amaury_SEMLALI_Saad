@@ -1,5 +1,5 @@
-#ifndef LEARNING_H
-#define LEARNING_H
+#ifndef MAZE_LEARNING_H
+#define MAZE_LEARNING_H
 
 #define RESULT_TABLE_LENGTH 100
 
@@ -34,9 +34,9 @@ enum training_mode{
 };
 enum learning_type{
     simple_learning,
-    number_learning_types,  // Types after this are not implemented - yet.
     double_learning,
     sarsa_learning,
+    number_learning_types,  // Types after this are not implemented - yet.
 };
 
 // Allocate Q and initialize constants for training.
@@ -63,8 +63,8 @@ int goal_reached(int coordonnee, int done);
 void printQ(double** Q);
 
 // Update Q over one epoch of training, according to the chosen training mode.
-int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time, int debug_mode);
-int train_one_epoch2(double epsilon, double temperature, int training_mode, int max_time, int debug_mode);
+int train_one_epoch(double** Q, double epsilon, double temperature, int training_mode, int max_time, int debug_mode);
+int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperature, int training_mode, int max_time, int debug_mode);
 // RELEASE THE AGENT!
 int main();
 
@@ -88,4 +88,4 @@ double** Q2;
 
 
 
-#endif /* LEARNING_H */
+#endif /* MAZE_LEARNING_H */
