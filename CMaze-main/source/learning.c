@@ -2,10 +2,6 @@
 #include "../include/functions.h"
 #include "learning.h"
 #include <time.h>
-//extern int rows;
-//extern int cols;
-
-#define ARRAY_LENGTH(x)  (sizeof(x) / sizeof((x)[0]))
 
 /*  ///  LEGACY CODE  ///
 void add_crumbs(){
@@ -22,9 +18,11 @@ void add_crumbs(){
 
 // INITIALIZATION
 
-void initQ(){
-    printf("Initializing.\n");
-    printf("Number of actions: %d\nNumber of rows: %d\nNumber of cols: %d\n", number_actions, rows, cols);
+void initQ(int debug_mode){
+    printf("Initializing Q.\n");
+    if(debug_mode>0){
+        printf("Number of actions: %d\nNumber of rows: %d\nNumber of cols: %d\n", number_actions, rows, cols);
+    }
     Q = malloc(rows*cols*sizeof(double*));
     for(int i = 0; i<rows; ++i){
         for(int j = 0; j<cols; ++j){
@@ -35,13 +33,46 @@ void initQ(){
         for(int j = 0; j<cols; ++j) {
             for(int i = 0; i<rows; ++i){
                 Q[case_coord(i,j)][k]=0;
-                //printf("%d %d %f  ", i, j, Q[case_coord(i,j)][k]);
+                if(debug_mode>2){
+                    printf("%d %d %f  ", i, j, Q[case_coord(i,j)][k]);
+                }
             }
-            //printf("\n");
+            if(debug_mode>2){printf("\n");}
         }
     }
     printf("Initialization of Q complete.\n");
 }
+void initQ2(int debug_mode){
+    printf("Initializing Q1 and Q2.\n");
+    if(debug_mode>0){
+        printf("Number of actions: %d\nNumber of rows: %d\nNumber of cols: %d\n", number_actions, rows, cols);
+    }
+    Q1 = malloc(rows*cols*sizeof(double*));
+    Q2 = malloc(rows*cols*sizeof(double*));
+    for(int i = 0; i<rows; ++i){
+        for(int j = 0; j<cols; ++j){
+            Q1[case_coord(i,j)] = malloc(number_actions*sizeof(double));
+            Q2[case_coord(i,j)] = malloc(number_actions*sizeof(double));
+        }
+    }
+    for(int k = 0; k<number_actions; ++k){
+        for(int j = 0; j<cols; ++j) {
+            for(int i = 0; i<rows; ++i){
+                Q1[case_coord(i,j)][k]=0;
+                Q2[case_coord(i,j)][k]=0;
+                if(debug_mode>2){ // Poor implementation. TODO: rewrite it correctly.
+                    printf("%d %d %f  ", i, j, Q1[case_coord(i,j)][k]);
+                    printf("%d %d %f  ", i, j, Q2[case_coord(i,j)][k]); 
+                }
+            }
+            if(debug_mode>2){printf("\n");}
+        }
+    }
+    printf("Initialization of Q1 and Q2 complete.\n");
+}
+
+
+
 
 void reset_result_table(){
     for(int i=0;i<result_table_length;++i){
@@ -55,8 +86,7 @@ action rand_action_uniform(){
     return (action) random_choice;
 }
 action rand_action_epsilon(double** Q,int coordonnee, double epsilon){
-    int temp_random_choice = rand()%10000;
-    double random_choice = temp_random_choice/10000;
+    double random_choice = randf(1);
     if (random_choice<epsilon){ //Explore!
         return rand_action_uniform();
     } 
@@ -64,6 +94,17 @@ action rand_action_epsilon(double** Q,int coordonnee, double epsilon){
         return (action) argmax(Q[coordonnee],number_actions);
     }
 }
+action rand_action_epsilon2(double** Q1,double** Q2,int coordonnee, double epsilon){
+    double random_choice = randf(1);
+    if (random_choice<epsilon){ //Explore!
+        return rand_action_uniform();
+    } 
+    else { //Remember.
+        return (action) argmax2(Q1[coordonnee],Q2[coordonnee],number_actions);
+    }
+}
+
+
 action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temperature){
     double poids_max=somme(Q[coordonnee],number_actions,exponential,temperature);
     // Choix de l'action aléatoirement
@@ -82,6 +123,35 @@ action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temp
     }
     else {
         printf("Error in rand_action_boltzmann_exploration. Didn't match properly.\n");
+        return right;
+    }
+}
+
+action rand_action_boltzmann_exploration2(double** Q1, double** Q2, int coordonnee, double temperature){
+    double* liste = malloc(number_actions * sizeof(double)); // liste = Q1[coordonnee] + Q2[coordonnee] added vectorially; its size is number_actions
+    for(int i=0;i<number_actions;++i){
+        liste[i] = Q1[coordonnee][i]+Q2[coordonnee][i];
+    }
+    double poids_max=somme(liste,number_actions,exponential,temperature);
+    // Choix de l'action aléatoirement
+    double random_chooser = randf(poids_max);
+    for(action a=up;a<number_actions;a++){
+        /////// WARNING: EXTREMELY VULNERABLE TO FLOAT ROUNDING ERRORS. TODO: REWRITE IN A MORE ROBUST WAY. //////
+        if(random_chooser<exponential(liste[a],temperature)){
+            free(liste);
+            return a;
+        } else {
+            random_chooser -= exponential(liste[a],temperature);
+        }
+    }
+    if(random_chooser>0){
+        printf("Error in rand_action_boltzmann_exploration. random_chooser too high.\n");
+        free(liste);
+        return up;
+    }
+    else {
+        printf("Error in rand_action_boltzmann_exploration. Didn't match properly.\n");
+        free(liste);
         return right;
     }
 }
@@ -108,7 +178,7 @@ void printQ(double** Q){
     printf("\n");
 }
 
-int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time){
+int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
     // Initialize starting position.
     maze_reset();
         
@@ -141,11 +211,12 @@ int train_one_epoch(double epsilon, double temperature, int training_mode, int m
         new_row = stepOut.new_row;
         new_col = stepOut.new_col;
         new_coord = case_coord(new_row,new_col);
-        //printf("Tic.\n");
+
         //Update Q.
-        //printf("Test: %f\n", Q[current_coord][a]);
+        if(debug_mode>3){
+            printf("Test: %f\n", Q[current_coord][action_chosen]);
+        }
         Q[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q[new_coord],number_actions)) - Q[current_coord][action_chosen]);
-        //printf("Toc.\n");
 
         coord(current_coord, &state_row, &state_col);
         if(visited[state_row][state_col] == unknown){
@@ -155,35 +226,108 @@ int train_one_epoch(double epsilon, double temperature, int training_mode, int m
         current_coord = new_coord;
         coord(current_coord, &state_row, &state_col);
         time++;
-        if(time>=500){
-        	printf("The goal is not reached\n");
-        }
     }
     if (goal_reached(current_coord,done)){
         return 1;
     } else if (time>=max_time){
+        printf("The goal is not reached.\n");
         return 0;
     } else {
         printf("Error in train_one_epoch: invalid end of training for this epoch.\n");
         return -1;
     }
 }
-
-int main(){
+int train_one_epoch2(double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
+    // Initialize starting position.
+    maze_reset();
+        
+    int time = 0;
+    double current_reward;
+    int current_coord = case_coord(state_row,state_col);
+    int new_row;
+    int new_col;
+    int new_coord;
+    int done = 0;
+    envOutput stepOut;
     
+    // Run around in the maze!
+    while(!goal_reached(current_coord, done) && time < max_time){ 
+        //Choose movement.
+        action action_chosen;
+        if(training_mode == epsilon_greedy){
+            action_chosen = rand_action_epsilon2(Q1, Q2, current_coord, epsilon);
+        } else if(training_mode == boltzmann_exploration){
+                action_chosen = rand_action_boltzmann_exploration2(Q1, Q2, current_coord, temperature);
+        } else {
+                printf("Error in train_one_epoch2: training mode unrecognized.\n");
+                action_chosen = rand_action_uniform();
+        }
+
+        //Move.
+        stepOut = maze_step(action_chosen);
+        current_reward = stepOut.reward;
+        done = stepOut.done;
+        new_row = stepOut.new_row;
+        new_col = stepOut.new_col;
+        new_coord = case_coord(new_row,new_col);
+
+        //Update Q1,Q2.
+        if(debug_mode>3){
+            printf("Test: %f\n", Q1[current_coord][action_chosen]);
+            printf("Test: %f\n", Q2[current_coord][action_chosen]);
+        }
+        
+        int choix=rand()%2;
+        if(debug_mode>3){
+            printf("Choix: %d\n",choix);
+        }
+        
+        if (choix==0){
+            Q1[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q2[new_coord],number_actions)) - Q1[current_coord][action_chosen]);
+        }
+        else{
+            Q2[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q1[new_coord],number_actions)) - Q2[current_coord][action_chosen]);
+        }
+
+        coord(current_coord, &state_row, &state_col);
+        if(visited[state_row][state_col] == unknown){
+            visited[state_row][state_col] = known;
+        }
+
+        current_coord = new_coord;
+        coord(current_coord, &state_row, &state_col);
+        time++;
+    }
+    if (goal_reached(current_coord,done)){
+        return 1;
+    } else if (time>=max_time){
+        printf("The goal is not reached.\n");
+        return 0;
+    } else {
+        printf("Error in train_one_epoch2: invalid end of training for this epoch.\n");
+        return -1;
+    }
+}
+
+int main(){    
     srand(time(NULL));
     // IF test_mode IS SET TO 1, NO AGENT WILL BE SPAWNED NOR TRAINED. 
     int test_mode = 0;
     // debug_mode ACTIVATES A FEW printfS HERE AND THERE. The bigger, the more, like a verbose mode! 
-    int debug_mode = 1;
+    int debug_mode = 2;
 
-    // INITIALIZATION
+    ////////////// INITIALIZATION //////////////
     maze_make("maze.txt");
     init_visited();
+    int training_mode = epsilon_greedy;                  // No current way to display the training mode automatically.
+    int learning_type = double_learning;                 // Idem.
+    printf("Training mode chosen: epsilon_greedy.\n");   // Be sure to edit it if you change the training mode.
+    printf("Learning type chosen: double.\n");           // Idem.
+        
     if (!test_mode) {
 
-        long sleeping_time = 000; // Time slept (in milliseconds) for graphical/testing purposes.
-                                   // set to 0 if you only want to train the agent.
+        long sleeping_time = 000;   // Time slept (in milliseconds) for graphical/testing purposes.
+                                    // set to 0 if you only want to train the agent.
         if(sleeping_time>200){
             printf("Warning: the agent will take a full nap between each epoch: %ld ms.\nYou must change it!\nPlease input a sleeping_time (in ms): (recommended value is 50)\n",sleeping_time);
             int check = scanf("%ld", &sleeping_time);
@@ -204,25 +348,37 @@ int main(){
             }
         }
 
-        int training_mode = boltzmann_exploration;                  // No current way to display the training mode automatically.
-        printf("Training mode chosen: boltzmann_exploration.\n");   // Be sure to edit it if you change the training mode.
-        max_epoch = 500;
+        max_epoch = 10000;
         max_time = 500;
         current_epoch = 0;
         learning_rate = 0.1;
         discount_rate = 0.9;
         epsilon = 1; // Epsilon gets decreased as epochs go.
         temperature = 1; // Temperature gets decreased as epochs go.
-        // In fact, epsilon and temperature are always the same values, but they are used for different things. They are a sacrifice I am willing to make.
+        // In fact, epsilon and temperature are always the same values as implemented here, but they are used for different things.
+        max_super_winrate = 50;
         printf("sleeping time: %ld\n",sleeping_time);
-        initQ();
+        if(learning_type == simple_learning){
+            initQ(debug_mode);
+        } else if(learning_type == double_learning){
+            initQ2(debug_mode);
+        } else {
+            printf("Error during Q initialization: unsupported learning_type.\n");
+        }
         
         if(debug_mode>2){
-            printQ(Q);
+            if(learning_type == simple_learning){
+                printQ(Q);
+            } else if(learning_type == double_learning){
+                printQ(Q1);
+                printQ(Q2);
+            } else {
+                printf("Error during Q initialization: unsupported learning_type.\n");
+            }
             maze_render();
         }
         
-        // END OF INITIALIZATION //
+        ////////////// END OF INITIALIZATION //////////////
 
 
 
@@ -231,21 +387,48 @@ int main(){
         printf("Press any key to start training.\n");
         
         getchar();
-        while(current_epoch<max_epoch){
-            if(debug_mode>0){
+        double winrate = 0; // Percentage of games won among the last 100.
+        int super_winrate = 0; // Consecutive games without error.
+        while(super_winrate<max_super_winrate && current_epoch<max_epoch){
+            if(debug_mode>1){
                 printf("Current epoch: %d\nepsilon: %f, temperature: %f\n",current_epoch,epsilon,temperature);
             }
-            result_table[current_epoch%result_table_length] = train_one_epoch(epsilon, temperature, training_mode, max_time);
-            result_table[result_table_length] = current_epoch;
             reset_visited();
+            if(learning_type == simple_learning){
+                result_table[current_epoch%result_table_length] = train_one_epoch(epsilon, temperature, training_mode, max_time, debug_mode);
+            } else if(learning_type == double_learning){
+                result_table[current_epoch%result_table_length] = train_one_epoch2(epsilon, temperature, training_mode, max_time, debug_mode);
+            } else {
+                printf("Error during training: unsupported learning_type.\n");
+            }
+            result_table[result_table_length] = current_epoch;
+            
 
-            if(debug_mode>1){
-                printQ(Q);
+            if(debug_mode>2){
+                if(learning_type == simple_learning){
+                    printQ(Q);
+                } else if(learning_type == double_learning){
+                    printQ(Q1);
+                    printQ(Q2);
+                } else {
+                    printf("Error during training: unsupported learning_type.\n");
+                }
+                
             }
             msleep(sleeping_time);
+            winrate = get_latest_results(result_table,result_table_length);
+            if(debug_mode>0){
+                printf("Win rate: %.0f%%\n",winrate);
+            }
+            if(winrate == 100){
+                super_winrate +=1;
+            } else {
+                super_winrate = 0;
+            }
             current_epoch++;
             epsilon = maxf(0.95*epsilon,0.01);
             temperature = maxf(0.95*temperature,0.01);
+
         }
     }
 
@@ -258,33 +441,43 @@ int main(){
         //test_somme(is_random);
         //test_envOutput(is_random);
         //test_rand();
-        test_randf();
+        //test_randf();
         //test_coord_converter();
     }
     ////////////////////////////////////
 
     if(!test_mode){
-        printf("Results of the training.\nPress any key to display.\n");
+        printf("\nResults of the training.\nPress any key to display.\n");
         getchar();
         
 
         ////////////////////
         if(debug_mode>0){
-            printQ(Q);
-            /*printf("Length of visited: %lux%lu\nLength of maze: %lux%lu\nLength of Q: %lux%lu\n", \
-                ARRAY_LENGTH(visited),ARRAY_LENGTH(visited[0]),                             \
-                ARRAY_LENGTH(maze),ARRAY_LENGTH(maze[0]),                                   \
-                ARRAY_LENGTH(Q),ARRAY_LENGTH(Q[0]));
-            */ // Dysfunctional code; ARRAY_LENGTH only works on static arrays.
+
+            if(learning_type == simple_learning){
+                printQ(Q);
+            } else if(learning_type == double_learning){
+                printQ(Q1);
+                printQ(Q2);
+            } else {
+                printf("Error in result display: unsupported learning_type.\n");
+            }
             maze_render();
         }
-        if(debug_mode>1){
+        if(debug_mode>2){
             print_visited();
         }
         printf("The end.\nHope you enjoyed it! ^-^\n");
         
         // Free everything. Information wants to be free, and so do mice!
-        quit();
+        if(learning_type == simple_learning){
+            quit(debug_mode);
+        } else if(learning_type == double_learning){
+            quit2(debug_mode);
+        } else {
+            printf("Error when quitting: unsupported learning_type.\n");
+        }
+        
     }
     else {
         quit_maze();
@@ -293,14 +486,33 @@ int main(){
 }
 
 
-void quit(){
+void quit(int debug_mode){
+    if(debug_mode>0){
+        printf("Quitting...\n");
+    }
     quit_maze();
     for(int i = 0; i<rows; ++i){
-        //printf("i: %d\n",i);
-        //printf("%d",cols);
-        //printf("Tic.\n");
+        
+        
         for(int j = 0; j<cols; ++j){
             free(Q[case_coord(i,j)]);
+        }
+    } 
+    printf("Agent terminated.\n");
+}
+void quit2(int debug_mode){
+    if(debug_mode>0){
+        printf("Quitting...\n");
+    }
+    quit_maze();
+    for(int i = 0; i<rows; ++i){
+        if(debug_mode>2){
+            printf("i: %d\n",i);
+            printf("%d",cols);
+        }
+        for(int j = 0; j<cols; ++j){
+            free(Q1[case_coord(i,j)]);
+            free(Q2[case_coord(i,j)]);
         }
     } 
     printf("Agent terminated.\n");

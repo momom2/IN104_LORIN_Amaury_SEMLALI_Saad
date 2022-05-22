@@ -43,4 +43,7 @@ double exponential(double x, double temperature);
 
 double somme(double* liste, int length, double (*function)(double, double) , double temperature);
 extern void test_somme();
+
+int get_latest_results(int* result_table,int result_table_length);
+
 #endif

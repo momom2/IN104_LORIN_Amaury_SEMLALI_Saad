@@ -17,6 +17,7 @@ double learning_rate; 		// learning rate
 double discount_rate;	 	// discount rate
 double epsilon; 			// For epsilon-greedy learning, probability to explore.
 double temperature;         // Parameter for Boltzmann exploration.
+int max_super_winrate;      // Since training is probabilistic, sometimes the agent will win with luck using a flawed Q-table. The higher max_super_winrate, the lower the probability of this happening.
 int max_epoch; 				// Total number of times the agent will play.
 int max_time;               // Maximum number of moves in one epoch.
 int current_epoch;	 		// Tracks the number of times the agent has played.
@@ -31,15 +32,29 @@ enum training_mode{
     boltzmann_exploration,
     number_training_modes, 	// Modes after this are not implemented - yet.
 };
+enum learning_type{
+    simple_learning,
+    number_learning_types,  // Types after this are not implemented - yet.
+    double_learning,
+    sarsa_learning,
+};
 
 // Allocate Q and initialize constants for training.
-void initQ(); 				
-void reset_success_rate();
+void initQ(int debug_mode);
+void initQ2(int debug_mode);
+
+void reset_result_table();
+
 // Choose a random action.
 action rand_action_uniform();
 
+// Choose an action using Boltzmann exploration decision-making.
+action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temperature);
+action rand_action_boltzmann_exploration2(double** Q1, double** Q2, int coordonnee, double temperature);
+
 // Choose an action using epsilon-greedy decision-making.
 action rand_action_epsilon(double** Q,int coordonnee, double epsilon);
+action rand_action_epsilon2(double** Q1,double** Q2,int coordonnee, double epsilon);
 
 // Returns 1 iff the coordinate corresponds to the goal's location and done is 1.
 int goal_reached(int coordonnee, int done);
@@ -48,13 +63,29 @@ int goal_reached(int coordonnee, int done);
 void printQ(double** Q);
 
 // Update Q over one epoch of training, according to the chosen training mode.
-int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time);
-
+int train_one_epoch(double epsilon, double temperature, int training_mode, int max_time, int debug_mode);
+int train_one_epoch2(double epsilon, double temperature, int training_mode, int max_time, int debug_mode);
 // RELEASE THE AGENT!
 int main();
 
 
-void quit();
+void quit(int debug_mode);
+void quit2(int debug_mode);
+
+///////
+// Structures for double Q-learning.
+
+double** Q1;    
+double** Q2;
+
+
+
+
+
+
+
+
+
 
 
 #endif /* LEARNING_H */

@@ -12,6 +12,7 @@ void alloc_maze(){
 }
 
 void maze_make(char* file_name){
+     printf("Creating maze...\n");
      //printf("Begin maze_make.\n");
      char c;
      char rows_s[3] ={'\0'};

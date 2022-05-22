@@ -183,16 +183,18 @@ void test_somme(int random){
     }
 }
 
-void print_latest_results(result_table, result_table_length){
+int get_latest_results(int* result_table,int result_table_length){
     int sum = 0;
+    int result;
     for(int i=0;i<result_table_length;++i){
         result = result_table[i];
         if(result != 1 && result != 0){
-            printf("Error: invalid result_table in print_latest_results.\n");
+            printf("Error: invalid result_table in get_latest_results.\n");
         } else {
             sum += result;
         }
-    double winrate = (double) sum/result_table_length;
-    printf("Win rate: %2f\n",winrate);
     }
+    double winrate = (double) 100*sum/result_table_length;
+    
+    return winrate;
 }
