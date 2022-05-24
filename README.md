@@ -22,10 +22,10 @@ How to train an agent and use it to escape a maze or find the shortest path on a
 
 -Choose whether you want to escape a maze or find the shortest path on a graph.
 -In CMaze-main/source/, open the file maze_learning.c or graph_learning, as applicable.
--In the main function (around lines 360~390), check that:
+-In the main function (around lines 360-390), check that:
 	-test_mode = 0
 	-debug_mode = 0 (You can set it higher for more in depth details, but it's not very visible unless you know what you're looking for)
--At the beginning of the INITIALIZATION (around lines 370~400), input your filename as the argument of maze_make or graph_make, as applicable, and choose accordingly your training_mode and learning_type:
+-At the beginning of the INITIALIZATION (around lines 370-400), input your filename as the argument of maze_make or graph_make, as applicable, and choose accordingly your training_mode and learning_type:
 
 The choices are, for training_mode:
 	-epsilon_greedy
@@ -86,10 +86,10 @@ Don't touch those unless you know what you're doing.
 
 -By default, impassable edges are considered arbitrarily to be edges with the weight 1000. Their weight can be increased (but not made infinite) by modifying POIDS_INFINI (infinite weight) at the beginning of graphEnv.c in CMaze-main/source/.
 
--By default, agents stop training after 100 consecutive games where they reach the exit. This value can be increased by increasing max_super_winrate in maze_learning.c or graph_learning.c (lines around 410~430).
--By default, agents who never manage to win enough consecutive games will stop training after 10000 games. This value can be changed by changed max_epoch in maze_learning.c or graph_learning.c (lines around 400~420).
--By default, agents who don't manage to find the goal during a game will stop and lose the game after 500 moves. This value can be changed by changing max_time in maze_learning.c or graph_learning.c (lines around 400~420).
--By default, agents will train as fast as possible in a given environment. You can tell them to take a nap between each game by increasing sleeping_time in maze_learning.c or graph_learning.c (lines around 380~400).
+-By default, agents stop training after 100 consecutive games where they reach the exit. This value can be increased by increasing max_super_winrate in maze_learning.c or graph_learning.c (lines around 410-430).
+-By default, agents who never manage to win enough consecutive games will stop training after 10000 games. This value can be changed by changed max_epoch in maze_learning.c or graph_learning.c (lines around 400-420).
+-By default, agents who don't manage to find the goal during a game will stop and lose the game after 500 moves. This value can be changed by changing max_time in maze_learning.c or graph_learning.c (lines around 400-420).
+-By default, agents will train as fast as possible in a given environment. You can tell them to take a nap between each game by increasing sleeping_time in maze_learning.c or graph_learning.c (lines around 380-400).
 
 
 
