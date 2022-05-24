@@ -10,7 +10,7 @@ DIRECTORY = ~/ # Make sure you're in the right directory!
 #$(info DIRECTORY after = $(DIRECTORY))
 
 
-all : dfs maze_learning
+all : dfs maze_learning graph_learning
 
 
 clean :
