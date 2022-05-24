@@ -21,13 +21,13 @@ void add_crumbs(){
 void initQ(int debug_mode){
     printf("Initializing Q.\n");
     if(debug_mode>0){
-        printf("Number of actions: %d\nSize of graph:\n", number_actions, size);
+        printf("Number of actions: %d\nSize of graph: %d\n", number_actions, size);
     }
     Q = malloc(size*sizeof(double*));
     for(int i = 0; i<size; ++i){
         Q[i] = malloc(number_actions*sizeof(double));
     }
-    for(int a = 0; a<number_actions; ++k){
+    for(int a = 0; a<number_actions; ++a){
         for(int i = 0; i<size; ++i) {
             Q[i][a]=0;
             if(debug_mode>2){
@@ -41,7 +41,7 @@ void initQ(int debug_mode){
 void initQ2(int debug_mode){
     printf("Initializing Q1 and Q2.\n");
     if(debug_mode>0){
-        printf("Number of actions: %d\nSize of graph:\n", number_actions, size);
+        printf("Number of actions: %d\nSize of graph: %d\n", number_actions, size);
     }
     Q1 = malloc(size*sizeof(double*));
     Q2 = malloc(size*sizeof(double*));
@@ -50,7 +50,7 @@ void initQ2(int debug_mode){
         Q2[i] = malloc(number_actions*sizeof(double));
         
     }
-    for(int a = 0; a<number_actions; ++k){
+    for(int a = 0; a<number_actions; ++a){
         for(int i = 0; i<size; ++i) {
             Q1[i][a]=0;
             Q2[i][a]=0;
@@ -64,7 +64,7 @@ void initQ2(int debug_mode){
     printf("Initialization of Q1 and Q2 complete.\n");
 }
 
-//////////////////////////////////////////////// TODO: REWRITE EVERYTHING BELOW.
+
 
 
 
@@ -88,6 +88,7 @@ action rand_action_epsilon(double** Q,int coordonnee, double epsilon){
         return (action) argmax(Q[coordonnee],number_actions);
     }
 }
+
 action rand_action_epsilon2(double** Q1,double** Q2,int coordonnee, double epsilon){
     double random_choice = randf(1);
     if (random_choice<epsilon){ //Explore!
@@ -103,7 +104,7 @@ action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temp
     double poids_max=somme(Q[coordonnee],number_actions,exponential,temperature);
     // Choix de l'action aléatoirement
     double random_chooser = randf(poids_max);
-    for(action a=up;a<number_actions;a++){
+    for(action a=0;a<number_actions;a++){
         /////// WARNING: EXTREMELY VULNERABLE TO FLOAT ROUNDING ERRORS. TODO: REWRITE IN A MORE ROBUST WAY. //////
         if(random_chooser<exponential(Q[coordonnee][a],temperature)){
             return a;
@@ -113,11 +114,11 @@ action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temp
     }
     if(random_chooser>0){
         printf("Warning in rand_action_boltzmann_exploration: random_chooser too high.\n");
-        return up;
+        return 0;
     }
     else {
         printf("Warning in rand_action_boltzmann_exploration: didn't match properly.\n");
-        return right;
+        return number_actions-1;
     }
 }
 
@@ -129,7 +130,7 @@ action rand_action_boltzmann_exploration2(double** Q1, double** Q2, int coordonn
     double poids_max=somme(liste,number_actions,exponential,temperature);
     // Choix de l'action aléatoirement
     double random_chooser = randf(poids_max);
-    for(action a=up;a<number_actions;a++){
+    for(action a=0;a<number_actions;a++){
         /////// WARNING: EXTREMELY VULNERABLE TO FLOAT ROUNDING ERRORS. TODO: REWRITE IN A MORE ROBUST WAY. //////
         if(random_chooser<exponential(liste[a],temperature)){
             free(liste);
@@ -141,18 +142,17 @@ action rand_action_boltzmann_exploration2(double** Q1, double** Q2, int coordonn
     if(random_chooser>0){
         printf("Warning in rand_action_boltzmann_exploration: random_chooser too high.\n");
         free(liste);
-        return up;
+        return 0;
     }
     else {
         printf("Warning in rand_action_boltzmann_exploration: didn't match properly.\n");
         free(liste);
-        return right;
+        return number_actions-1;
     }
 }
 
-int goal_reached(int coordonnee, int done){
-    int goal_coord = case_coord(goal_row, goal_col);
-    if (coordonnee == goal_coord){
+int goal_reached(int coordonnee, int done){;
+    if (coordonnee == goal){
         if (done == 1) {
             return 1;
         }
@@ -163,25 +163,20 @@ int goal_reached(int coordonnee, int done){
 
 void printQ(double** Q){
     printf("\n");
-    for(int i=0;i<rows;++i){
-        for(int j=0;j<cols;++j){
-            printf("%c ",graphical_move(argmax(Q[case_coord(i,j)],number_actions)));
-        }
-        printf("\n");
+    for(int i=0;i<size;++i){
+        printf("%d ",argmax(Q[i],number_actions));
     }
     printf("\n");
 }
 
 int train_one_epoch(double** Q, double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
     // Initialize starting position.
-    maze_reset();
+    graph_reset();
         
     int time = 0;
     double current_reward;
-    int current_coord = case_coord(state_row,state_col);
+    int current_coord = state;
     action action_chosen;
-    int new_row;
-    int new_col;
     int new_coord;
     int done = 0;
     envOutput stepOut;
@@ -199,12 +194,10 @@ int train_one_epoch(double** Q, double epsilon, double temperature, int training
         }
 
         //Move.
-        stepOut = maze_step(action_chosen);
+        stepOut = graph_step(action_chosen);
         current_reward = stepOut.reward;
         done = stepOut.done;
-        new_row = stepOut.new_row;
-        new_col = stepOut.new_col;
-        new_coord = case_coord(new_row,new_col);
+        new_coord = stepOut.new_state;
 
         //Update Q.
         if(debug_mode>3){
@@ -212,13 +205,15 @@ int train_one_epoch(double** Q, double epsilon, double temperature, int training
         }
         Q[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q[new_coord],number_actions)) - Q[current_coord][action_chosen]);
 
-        coord(current_coord, &state_row, &state_col);
-        if(visited[state_row][state_col] == unknown){
-            visited[state_row][state_col] = known;
+        
+        if(visited[current_coord] == unknown){
+            visited[current_coord] = known;
+        } else if(visited[current_coord] == known){
+            visited[current_coord] = very_known;
         }
 
         current_coord = new_coord;
-        coord(current_coord, &state_row, &state_col);
+        state = current_coord;
         time++;
     }
     if (goal_reached(current_coord,done)){
@@ -233,14 +228,12 @@ int train_one_epoch(double** Q, double epsilon, double temperature, int training
 }
 int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
     // Initialize starting position.
-    maze_reset();
+    graph_reset();
         
     int time = 0;
     double current_reward;
-    int current_coord = case_coord(state_row,state_col);
+    int current_coord = state;
     action action_chosen;
-    int new_row;
-    int new_col;
     int new_coord;
     int done = 0;
     envOutput stepOut;
@@ -258,13 +251,11 @@ int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperatur
         }
 
         //Move.
-        stepOut = maze_step(action_chosen);
+        stepOut = graph_step(action_chosen);
         current_reward = stepOut.reward;
         done = stepOut.done;
-        new_row = stepOut.new_row;
-        new_col = stepOut.new_col;
-        new_coord = case_coord(new_row,new_col);
-
+        new_coord = stepOut.new_state;
+        
         //Update Q1,Q2.
         if(debug_mode>3){
             printf("Test: %f\n", Q1[current_coord][action_chosen]);
@@ -283,13 +274,15 @@ int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperatur
             Q2[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q1[new_coord],number_actions)) - Q2[current_coord][action_chosen]);
         }
 
-        coord(current_coord, &state_row, &state_col);
-        if(visited[state_row][state_col] == unknown){
-            visited[state_row][state_col] = known;
+
+        if(visited[current_coord] == unknown){
+            visited[current_coord] = known;
+        } else if(visited[current_coord] == known){
+            visited[current_coord] = very_known;
         }
 
         current_coord = new_coord;
-        coord(current_coord, &state_row, &state_col);
+        state = current_coord;
         time++;
     }
     if (goal_reached(current_coord,done)){
@@ -304,14 +297,12 @@ int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperatur
 }
 int train_one_epochSARSA(double** Q, double epsilon, double temperature, int training_mode, int max_time, int debug_mode){
     // Initialize starting position.
-    maze_reset();
+    graph_reset();
         
     int time = 0;
     double current_reward;
-    int current_coord = case_coord(state_row,state_col);
+    int current_coord = state;
     action action_chosen; 
-    int new_row;
-    int new_col;
     int new_coord;
     int done = 0;
     envOutput stepOut;
@@ -330,12 +321,10 @@ int train_one_epochSARSA(double** Q, double epsilon, double temperature, int tra
     // Run around in the maze!
     while(!goal_reached(current_coord, done) && time < max_time){ 
         //Move.
-        stepOut = maze_step(action_chosen);
+        stepOut = graph_step(action_chosen);
         current_reward = stepOut.reward;
-        done= stepOut.done;
-        new_row = stepOut.new_row;
-        new_col = stepOut.new_col;
-        new_coord = case_coord(new_row,new_col);
+        done = stepOut.done;
+        new_coord = stepOut.new_state;
         // Choose movement.
         if(training_mode == epsilon_greedy){
             new_action_chosen = rand_action_epsilon(Q, new_coord, epsilon);
@@ -352,14 +341,16 @@ int train_one_epochSARSA(double** Q, double epsilon, double temperature, int tra
         }
         Q[current_coord][action_chosen] += learning_rate*(current_reward + (discount_rate*Q[new_coord][new_action_chosen]) - Q[current_coord][action_chosen]);
 
-        coord(current_coord, &state_row, &state_col);
-        if(visited[state_row][state_col] == unknown){
-            visited[state_row][state_col] = known;
+
+        if(visited[current_coord] == unknown){
+            visited[current_coord] = known;
+        } else if(visited[current_coord] == known){
+            visited[current_coord] = very_known;
         }
 
         current_coord = new_coord;
         action_chosen = new_action_chosen;
-        coord(current_coord, &state_row, &state_col);
+        state = current_coord;
         time++;
     }
     if (goal_reached(current_coord,done)){
@@ -381,7 +372,7 @@ int main(){
     int debug_mode = 2;
 
     ////////////// INITIALIZATION //////////////
-    maze_make("maze.txt");
+    graph_make("maze.txt");
     init_visited();
     int training_mode = boltzmann_exploration;                  // No current way to display the training mode automatically.
     int learning_type = sarsa_learning;                 // Idem.
@@ -439,7 +430,7 @@ int main(){
             } else {
                 printf("Warning during Q initialization: unsupported learning_type.\n");
             }
-            maze_render();
+            graph_render();
         }
         
         ////////////// END OF INITIALIZATION //////////////
@@ -528,7 +519,7 @@ int main(){
             } else {
                 printf("Warning in result display: unsupported learning_type.\n");
             }
-            maze_render();
+            graph_render();
         }
         if(debug_mode>2){
             print_visited();
@@ -546,41 +537,36 @@ int main(){
         
     }
     else {
-        quit_maze();
+        quit_graph();
     }
     return 0;
 }
-
 
 void quit(int debug_mode){
     if(debug_mode>0){
         printf("Quitting...\n");
     }
-    quit_maze();
-    for(int i = 0; i<rows; ++i){
-        
-        
-        for(int j = 0; j<cols; ++j){
-            free(Q[case_coord(i,j)]);
-        }
-    } 
+    quit_graph();
+    for(int i = 0; i<size; ++i){
+        free(Q[i]);
+    }
+    free(Q);
     printf("Agent terminated.\n");
 }
 void quit2(int debug_mode){
     if(debug_mode>0){
         printf("Quitting...\n");
     }
-    quit_maze();
-    for(int i = 0; i<rows; ++i){
+    quit_graph();
+    for(int i = 0; i<size; ++i){
         if(debug_mode>2){
             printf("i: %d\n",i);
-            printf("%d",cols);
         }
-        for(int j = 0; j<cols; ++j){
-            free(Q1[case_coord(i,j)]);
-            free(Q2[case_coord(i,j)]);
-        }
-    } 
+        free(Q1[i]);
+        free(Q2[i]);
+    }
+    free(Q1);
+    free(Q2);
     printf("Agent terminated.\n");
 }
 

@@ -109,7 +109,7 @@ action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temp
     double poids_max=somme(Q[coordonnee],number_actions,exponential,temperature);
     // Choix de l'action aléatoirement
     double random_chooser = randf(poids_max);
-    for(action a=up;a<number_actions;a++){
+    for(action a=0;a<number_actions;a++){
         /////// WARNING: EXTREMELY VULNERABLE TO FLOAT ROUNDING ERRORS. TODO: REWRITE IN A MORE ROBUST WAY. //////
         if(random_chooser<exponential(Q[coordonnee][a],temperature)){
             return a;
@@ -119,11 +119,11 @@ action rand_action_boltzmann_exploration(double** Q, int coordonnee, double temp
     }
     if(random_chooser>0){
         printf("Warning in rand_action_boltzmann_exploration: random_chooser too high.\n");
-        return up;
+        return 0;
     }
     else {
         printf("Warning in rand_action_boltzmann_exploration: didn't match properly.\n");
-        return right;
+        return number_actions-1;
     }
 }
 
@@ -135,7 +135,7 @@ action rand_action_boltzmann_exploration2(double** Q1, double** Q2, int coordonn
     double poids_max=somme(liste,number_actions,exponential,temperature);
     // Choix de l'action aléatoirement
     double random_chooser = randf(poids_max);
-    for(action a=up;a<number_actions;a++){
+    for(action a=0;a<number_actions;a++){
         /////// WARNING: EXTREMELY VULNERABLE TO FLOAT ROUNDING ERRORS. TODO: REWRITE IN A MORE ROBUST WAY. //////
         if(random_chooser<exponential(liste[a],temperature)){
             free(liste);
@@ -147,12 +147,12 @@ action rand_action_boltzmann_exploration2(double** Q1, double** Q2, int coordonn
     if(random_chooser>0){
         printf("Warning in rand_action_boltzmann_exploration: random_chooser too high.\n");
         free(liste);
-        return up;
+        return 0;
     }
     else {
         printf("Warning in rand_action_boltzmann_exploration: didn't match properly.\n");
         free(liste);
-        return right;
+        return number_actions-1;
     }
 }
 
@@ -387,7 +387,7 @@ int main(){
     int debug_mode = 2;
 
     ////////////// INITIALIZATION //////////////
-    maze_make("maze.txt");
+    maze_make("bigmaze.txt");
     init_visited();
     int training_mode = boltzmann_exploration;                  // No current way to display the training mode automatically.
     int learning_type = sarsa_learning;                 // Idem.
@@ -569,7 +569,8 @@ void quit(int debug_mode){
         for(int j = 0; j<cols; ++j){
             free(Q[case_coord(i,j)]);
         }
-    } 
+    }
+    free(Q);
     printf("Agent terminated.\n");
 }
 void quit2(int debug_mode){
@@ -586,7 +587,9 @@ void quit2(int debug_mode){
             free(Q1[case_coord(i,j)]);
             free(Q2[case_coord(i,j)]);
         }
-    } 
+    }
+    free(Q1);
+    free(Q2);
     printf("Agent terminated.\n");
 }
 

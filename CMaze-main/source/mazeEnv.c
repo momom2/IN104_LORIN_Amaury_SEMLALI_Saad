@@ -26,6 +26,7 @@ void maze_make(char* file_name){
      if (file) {
          /* lire la premiere ligne avant EOF */
          while( (c=getc(file)) != EOF) {
+                
                if(c== '\n'){
                       break;
                } else if (c==',') {
@@ -228,11 +229,9 @@ void test_maze_step(int random){
             printf("Placed in (%d,%d). Takes action %d (%c).\n",temp_state_row,temp_state_col,a,graphical_move(a));
             envOutput out = maze_step(a);
             printf("Reward: %f\nState: now in (%d,%d).\nHas moved? %d\nDone? %d\n",  \
-                out.reward,state_row,state_col,out.has_moved,out.done);
+                out.reward,out.new_row,out.new_col,out.has_moved,out.done);
         }
     }
-    
-    
     printf("Fin du test.\n");
 }
 //test_maze_step();
@@ -293,37 +292,35 @@ void alloc_visited()
 }
 
 
-void init_visited()
-{
-        alloc_visited();
+void init_visited(){
+    alloc_visited();
 
-        int i, j;
-        for (i = 0; i < rows; ++i) {
-                for (j = 0; j < cols; ++j) {
-                        if (maze[i][j] == '+') {
-                                visited[i][j] = wall;
-                        } else if (maze[i][j] == 'g') {
-                                visited[i][j] = goal;
-                        } else {
-                                visited[i][j] = unknown;
-                        }
-                }
+    int i, j;
+    for (i = 0; i < rows; ++i) {
+        for (j = 0; j < cols; ++j) {
+            if (maze[i][j] == '+') {
+                visited[i][j] = wall;
+            } else if (maze[i][j] == 'g') {
+                visited[i][j] = goal;
+            } else {
+                visited[i][j] = unknown;
+            }
         }
+    }
 }
-void reset_visited()
-{
-        int i, j;
-        for (i = 0; i < rows; ++i) {
-                for (j = 0; j < cols; ++j) {
-                        if (maze[i][j] == '+') {
-                                visited[i][j] = wall;
-                        } else if (maze[i][j] == 'g') {
-                                visited[i][j] = goal;
-                        } else {
-                                visited[i][j] = unknown;
-                        }
-                }
+void reset_visited(){
+    int i, j;
+    for (i = 0; i < rows; ++i) {
+        for (j = 0; j < cols; ++j) {
+            if (maze[i][j] == '+') {
+                visited[i][j] = wall;
+            } else if (maze[i][j] == 'g') {
+                visited[i][j] = goal;
+            } else {
+                visited[i][j] = unknown;
+            }
         }
+    }
 };
 
 void print_visited(){

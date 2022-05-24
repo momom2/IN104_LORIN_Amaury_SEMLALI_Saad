@@ -5,12 +5,15 @@
 #include <stdlib.h>
 //undirected weighted graph
 double** graph;
-int** visited;
+int* visited;
 int size; // The graph has size nodes, each is a state.
 
 int start; // Between 0 and size-1: a certain node.
 int state; // Between 0 and size-1: a certain node.
 int goal; // Between 0 and size-1: a certain node.
+
+double max_reward;
+double poids_infini = 1000; // Poids d'une arête que l'on veut impossible à traverser.
 
 enum terrain{
     unknown,
@@ -48,6 +51,7 @@ envOutput graph_step(action a);
 
 void test_graph_step();
 int rand_state();
+int rand_coord();
 
 action env_action_sample();
 
