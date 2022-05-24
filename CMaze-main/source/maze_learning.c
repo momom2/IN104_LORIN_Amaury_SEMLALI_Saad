@@ -230,7 +230,7 @@ int train_one_epoch(double** Q, double epsilon, double temperature, int training
     if (goal_reached(current_coord,done)){
         return 1;
     } else if (time>=max_time){
-        printf("The goal is not reached.\n");
+        if(debug_mode>1){printf("The goal is not reached.\n");}
         return 0;
     } else {
         printf("Warning in train_one_epoch: invalid end of training for this epoch.\n");
@@ -284,8 +284,7 @@ int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperatur
         
         if (choix==0){
             Q1[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q2[new_coord],number_actions)) - Q1[current_coord][action_chosen]);
-        }
-        else{
+        } else {
             Q2[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q1[new_coord],number_actions)) - Q2[current_coord][action_chosen]);
         }
 
@@ -301,7 +300,7 @@ int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperatur
     if (goal_reached(current_coord,done)){
         return 1;
     } else if (time>=max_time){
-        printf("The goal is not reached.\n");
+        if(debug_mode>1){printf("The goal is not reached.\n");}
         return 0;
     } else {
         printf("Warning in train_one_epoch2: invalid end of training for this epoch.\n");
@@ -369,9 +368,10 @@ int train_one_epochSARSA(double** Q, double epsilon, double temperature, int tra
         time++;
     }
     if (goal_reached(current_coord,done)){
+        if(debug_mode>1){printf("goal reached: %d\n",goal_reached(current_coord,done));}
         return 1;
     } else if (time>=max_time){
-        printf("The goal is not reached.\n");
+        if(debug_mode>1){printf("The goal is not reached.\n");}
         return 0;
     } else {
         printf("Warning in train_one_epoch: invalid end of training for this epoch.\n");
@@ -381,18 +381,18 @@ int train_one_epochSARSA(double** Q, double epsilon, double temperature, int tra
 
 int main(){    
     srand(time(NULL));
-    // IF test_mode IS SET TO 1, NO AGENT WILL BE SPAWNED NOR TRAINED. 
+    // SET test_mode TO 0 TO TRAIN AN AGENT. IF SET TO 1, NO AGENT WILL BE SPAWNED NOR TRAINED.
     int test_mode = 0;
     // debug_mode ACTIVATES A FEW printfS HERE AND THERE. The bigger, the more, like a verbose mode! 
-    int debug_mode = 2;
+    int debug_mode = 0;
 
     ////////////// INITIALIZATION //////////////
-    maze_make("bigmaze.txt");
+    maze_make("maze.txt");
     init_visited();
-    int training_mode = boltzmann_exploration;                  // No current way to display the training mode automatically.
-    int learning_type = sarsa_learning;                 // Idem.
-    printf("Training mode chosen: Boltzmann exploration.\n");   // Be sure to edit it if you change the training mode.
-    printf("Learning type chosen: SARSA.\n");           // Idem.
+    int training_mode = epsilon_greedy;                  // No current way to display the training mode automatically.
+    int learning_type = simple_learning;                 // Idem.
+    printf("Training mode chosen: Epsilon-greedy learning.\n");     // Be sure to edit it if you change the training mode.
+    printf("Learning type chosen: Q-learning.\n");                  // Idem.
         
     if (!test_mode) {
 
@@ -426,7 +426,7 @@ int main(){
         epsilon = 1; // Epsilon gets decreased as epochs go.
         temperature = 1; // Temperature gets decreased as epochs go.
         // In fact, epsilon and temperature are always the same values as implemented here, but they are used for different things.
-        max_super_winrate = 1;
+        max_super_winrate = 001;
         printf("sleeping time: %ld\n",sleeping_time);
         if(learning_type == simple_learning || learning_type == sarsa_learning){
             initQ(debug_mode);
@@ -506,15 +506,15 @@ int main(){
 
     //////////// TEST ZONE. ////////////
     if(test_mode){
-        //int is_random = 0;
+        int is_random = 0;
 
         
-        //crash_visited();
-        //test_somme(is_random);
-        //test_envOutput(is_random);
-        //test_rand();
-        //test_randf();
-        //test_coord_converter();
+        crash_visited();
+        test_somme(is_random);
+        test_maze_step(is_random);
+        test_rand();
+        test_randf();
+        test_coord_converter();
     }
     ////////////////////////////////////
 
@@ -524,18 +524,18 @@ int main(){
         
 
         ////////////////////
-        if(debug_mode>0){
+       
 
-            if(learning_type == simple_learning || learning_type == sarsa_learning){
-                printQ(Q);
-            } else if(learning_type == double_learning){
-                printQ(Q1);
-                printQ(Q2);
-            } else {
-                printf("Warning in result display: unsupported learning_type.\n");
-            }
-            maze_render();
+        if(learning_type == simple_learning || learning_type == sarsa_learning){
+            printQ(Q);
+        } else if(learning_type == double_learning){
+            printQ(Q1);
+            printQ(Q2);
+        } else {
+            printf("Warning in result display: unsupported learning_type.\n");
         }
+        maze_render();
+        
         if(debug_mode>2){
             print_visited();
         }

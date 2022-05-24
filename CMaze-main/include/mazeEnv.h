@@ -57,7 +57,7 @@ envOutput maze_step(action a);
 // Returns an arrow corresponding to the action - up, down, left or right.
 char graphical_move(int action);
 
-void test_envOutput();
+void test_maze_step(int is_random);
 int rand_col();
 int rand_row();
 

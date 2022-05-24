@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
 //undirected weighted graph
 double** graph;
 int* visited;
@@ -13,7 +14,7 @@ int state; // Between 0 and size-1: a certain node.
 int goal; // Between 0 and size-1: a certain node.
 
 double max_reward;
-double poids_infini = 1000; // Poids d'une arête que l'on veut impossible à traverser.
+double poids_infini; // Poids d'une arête que l'on veut impossible à traverser.
 
 enum terrain{
     unknown,
@@ -60,6 +61,7 @@ void alloc_visited();
 void init_visited();
 void reset_visited();
 void print_visited();
+void crash_visited();
 
 void quit_graph();
 

@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+double poids_infini; // Taken from graphEnv.h, big weight for impassable edges.
 
 double** Q; 				// Q-table Q[rows*cols][number_actions]
 // ATTENTION : rows et cols participent de la même variable. Q pourrait être réécrite en Q[rows][cols][number_actions]
@@ -30,12 +31,12 @@ int result_table[RESULT_TABLE_LENGTH+1];      // Tracks the results of the last 
 //extern int size; 			// From mazeEnv.h
 
 enum training_mode{
-    number_training_modes,  // Modes after this are not implemented - yet.
+    number_training_modes,  // Modes after this are not implemented - yet. They're still usable in a beta state. No guarantee though.
     epsilon_greedy,
     boltzmann_exploration,
 };
 enum learning_type{
-    number_learning_types,  // Types after this are not implemented - yet.
+    number_learning_types,  // Types after this are not implemented - yet. They're still usable in a beta state. No guarantee, though.
     simple_learning,
     double_learning,
     sarsa_learning,

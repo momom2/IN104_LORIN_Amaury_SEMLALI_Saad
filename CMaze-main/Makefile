@@ -35,11 +35,6 @@ graph_learning : $(SRC)graph_learning.o $(SRC)functions.o $(SRC)graphEnv.o
 	
 	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
 
-
-sarsa : $(SRC)sarsa.o $(SRC)functions.o $(SRC)mazeEnv.o
-	
-	$(CC) $(INC) -o $@.out $^ $(CFLAGS)
-
 zip:
 	tar -zcvf prog.tgz $(DIRECTORY) 
 

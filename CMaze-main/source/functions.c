@@ -87,7 +87,7 @@ int argmax2(double* list1,double* list2,int length){
     return temp_argmax;
 }
 /* msleep(): Sleep for the requested number of milliseconds. */
-// Copy-pasted from https://www.codegrepper.com/code-examples/c/c+sleep+milliseconds //
+// Copy-pasted from https://stackoverflow.com/questions/1157209/is-there-an-alternative-sleep-function-in-c-to-milliseconds/1157217#1157217 //
 int msleep(long msec){
     struct timespec ts;
     int res;

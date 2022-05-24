@@ -1,6 +1,7 @@
 #include "graphEnv.h" 
 #include "functions.h"
 
+#define POIDS_INFINI 1000
 
 
 void alloc_graph(){
@@ -13,6 +14,7 @@ void alloc_graph(){
 
 void graph_make(char* file_name){
      printf("Creating graph...\n");
+     double poids_infini = POIDS_INFINI;
      char c;
      double poids_total;
      int swap = 0;
@@ -212,5 +214,5 @@ void quit_graph(){
     free(graph);
 
     free(visited);
-    printf("Maze destroyed.\n");
+    printf("Graph destroyed.\n");
 }
