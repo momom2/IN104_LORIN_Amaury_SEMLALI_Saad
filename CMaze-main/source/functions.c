@@ -56,17 +56,33 @@ double listmax(double* list, int length){
 }
 
 // argmax(): Return the index of the first maximal element of the list.
-int argmax(double* list, int length){
+int argmax(double* list, int length, int* is_preference){
+    int is_preference_defined = 1;
+    if(is_preference == NULL){
+        is_preference_defined = 0;
+    }
+    if(is_preference_defined == 1){
+        *is_preference = 0;
+    }
     if (length<=0){
         printf("Error in list length. Argmax failed.\n");
         return -1;
     }
+
     double temp_argmax = 0;
     double temp_max = list[0]; 
     for(int i=1;i<length;++i){
         if (list[i]>temp_max){
+            if(is_preference_defined == 1){
+                *is_preference = 1;
+            }
             temp_argmax = i;
             temp_max = list[i];
+        }
+    }
+    if(temp_max!=0){
+        if(is_preference_defined == 1){
+            *is_preference = 1;
         }
     }
     return temp_argmax;
@@ -199,4 +215,12 @@ int get_latest_results(int* result_table,int result_table_length){
     double winrate = (double) 100*sum/result_table_length;
     
     return winrate;
+}
+
+void print_list(double* list, int length){
+    printf("[");
+    for(int i=0;i<length-1;++i){
+        printf("%f, ",list[i]);
+    }
+    printf("%f]\n",list[length-1]);
 }

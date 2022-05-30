@@ -91,7 +91,7 @@ action rand_action_epsilon(double** Q,int coordonnee, double epsilon){
         return rand_action_uniform();
     } 
     else { //Remember.
-        return (action) argmax(Q[coordonnee],number_actions);
+        return (action) argmax(Q[coordonnee],number_actions, NULL);
     }
 }
 action rand_action_epsilon2(double** Q1,double** Q2,int coordonnee, double epsilon){
@@ -168,10 +168,11 @@ int goal_reached(int coordonnee, int done){
 }
 
 void printQ(double** Q){
-    printf("\n");
+    int preference;
     for(int i=0;i<rows;++i){
         for(int j=0;j<cols;++j){
-            printf("%c ",graphical_move(argmax(Q[case_coord(i,j)],number_actions)));
+            action preferred_action = argmax(Q[case_coord(i,j)],number_actions, &preference);
+            printf("%c ",graphical_move(preferred_action, preference));
         }
         printf("\n");
     }
@@ -203,7 +204,6 @@ int train_one_epoch(double** Q, double epsilon, double temperature, int training
             printf("Warning in train_one_epoch: training_mode unrecognized.\n");
             action_chosen = rand_action_uniform();
         }
-
         //Move.
         stepOut = maze_step(action_chosen);
         current_reward = stepOut.reward;
@@ -214,23 +214,25 @@ int train_one_epoch(double** Q, double epsilon, double temperature, int training
 
         //Update Q.
         if(debug_mode>3){
-            printf("Test: %f\n", Q[current_coord][action_chosen]);
+            printf("Test. Coord: %d, action: %d, ",current_coord,action_chosen);
+            printf("Q-weight: %f\n", Q[current_coord][action_chosen]);
         }
+        //printf("Avant: %f\n", Q[current_coord][action_chosen]);
         Q[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q[new_coord],number_actions)) - Q[current_coord][action_chosen]);
-
+        //printf("Après: %f\n", Q[current_coord][action_chosen]);
         coord(current_coord, &state_row, &state_col);
         if(visited[state_row][state_col] == unknown){
             visited[state_row][state_col] = known;
         }
-
         current_coord = new_coord;
         coord(current_coord, &state_row, &state_col);
         time++;
     }
     if (goal_reached(current_coord,done)){
+        if(debug_mode>1){printf("The goal has been reached.\n");}
         return 1;
     } else if (time>=max_time){
-        if(debug_mode>1){printf("The goal is not reached.\n");}
+        if(debug_mode>1){printf("The goal has not been reached.\n");}
         return 0;
     } else {
         printf("Warning in train_one_epoch: invalid end of training for this epoch.\n");
@@ -273,19 +275,20 @@ int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperatur
 
         //Update Q1,Q2.
         if(debug_mode>3){
-            printf("Test: %f\n", Q1[current_coord][action_chosen]);
-            printf("Test: %f\n", Q2[current_coord][action_chosen]);
+            printf("Test. Coord: %d, action: %d, ",current_coord,action_chosen);
+            printf("Q1-weight: %f, Q2-weight: %f\n", Q1[current_coord][action_chosen], Q2[current_coord][action_chosen]);
         }
-        
         int choix=rand()%2;
-        if(debug_mode>3){
+        if(debug_mode>2){
             printf("Choix: %d\n",choix);
         }
         
         if (choix==0){
-            Q1[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q2[new_coord],number_actions)) - Q1[current_coord][action_chosen]);
+            action action_star = argmax(Q1[new_coord],number_actions,NULL);
+            Q1[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*Q2[new_coord][action_star] - Q1[current_coord][action_chosen]);
         } else {
-            Q2[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*(listmax(Q1[new_coord],number_actions)) - Q2[current_coord][action_chosen]);
+            action action_star = argmax(Q2[new_coord],number_actions,NULL);
+            Q2[current_coord][action_chosen] += learning_rate*(current_reward + discount_rate*Q1[new_coord][action_star] - Q2[current_coord][action_chosen]);
         }
 
         coord(current_coord, &state_row, &state_col);
@@ -298,9 +301,10 @@ int train_one_epoch2(double** Q1, double** Q2, double epsilon, double temperatur
         time++;
     }
     if (goal_reached(current_coord,done)){
+        if(debug_mode>1){printf("The goal has been reached.\n");}
         return 1;
     } else if (time>=max_time){
-        if(debug_mode>1){printf("The goal is not reached.\n");}
+        if(debug_mode>1){printf("The goal has not been reached.\n");}
         return 0;
     } else {
         printf("Warning in train_one_epoch2: invalid end of training for this epoch.\n");
@@ -353,7 +357,8 @@ int train_one_epochSARSA(double** Q, double epsilon, double temperature, int tra
 
         //Update Q.
         if(debug_mode>3){
-            printf("Test: %f\n", Q[current_coord][action_chosen]);
+            printf("Test. Coord: %d, action: %d, ",current_coord,action_chosen);
+            printf("Q-weight: %f\n", Q[current_coord][action_chosen]);
         }
         Q[current_coord][action_chosen] += learning_rate*(current_reward + (discount_rate*Q[new_coord][new_action_chosen]) - Q[current_coord][action_chosen]);
 
@@ -368,10 +373,10 @@ int train_one_epochSARSA(double** Q, double epsilon, double temperature, int tra
         time++;
     }
     if (goal_reached(current_coord,done)){
-        if(debug_mode>1){printf("goal reached: %d\n",goal_reached(current_coord,done));}
+        if(debug_mode>1){printf("The goal has been reached\n");}
         return 1;
     } else if (time>=max_time){
-        if(debug_mode>1){printf("The goal is not reached.\n");}
+        if(debug_mode>1){printf("The goal has not been reached.\n");}
         return 0;
     } else {
         printf("Warning in train_one_epoch: invalid end of training for this epoch.\n");
@@ -385,9 +390,10 @@ int main(){
     int test_mode = 0;
     // debug_mode ACTIVATES A FEW printfS HERE AND THERE. The bigger, the more, like a verbose mode! 
     int debug_mode = 0;
-
+    // SET animate_learning HIGHER THAN 0 TO DISPLAY Q AS IT IS CONSTRUCTED BY THE AGENT DURING THE TRAINING PHASE.
+    int animate_learning = 1;
     ////////////// INITIALIZATION //////////////
-    maze_make("maze.txt");
+    maze_make("bigmaze.txt");
     init_visited();
     int training_mode = epsilon_greedy;                  // No current way to display the training mode automatically.
     int learning_type = simple_learning;                 // Idem.
@@ -396,8 +402,11 @@ int main(){
         
     if (!test_mode) {
 
-        long sleeping_time = 000;   // Time slept (in milliseconds) for graphical/testing purposes.
+        long sleeping_time = 0;   // Time slept (in milliseconds) for graphical/testing purposes.
                                     // set to 0 if you only want to train the agent.
+        if(animate_learning){
+            sleeping_time = max(20,sleeping_time);
+        }
         if(sleeping_time>200){
             printf("Warning: the agent will take a full nap between each epoch: %ld ms.\nYou must change it!\nPlease input a sleeping_time (in ms): (recommended value is 50)\n",sleeping_time);
             int check = scanf("%ld", &sleeping_time);
@@ -426,7 +435,7 @@ int main(){
         epsilon = 1; // Epsilon gets decreased as epochs go.
         temperature = 1; // Temperature gets decreased as epochs go.
         // In fact, epsilon and temperature are always the same values as implemented here, but they are used for different things.
-        max_super_winrate = 001;
+        max_super_winrate = result_table_length;
         printf("sleeping time: %ld\n",sleeping_time);
         if(learning_type == simple_learning || learning_type == sarsa_learning){
             initQ(debug_mode);
@@ -438,13 +447,17 @@ int main(){
         
         if(debug_mode>2){
             if(learning_type == simple_learning || learning_type == sarsa_learning){
+                printf("Q-table:\n");
                 printQ(Q);
             } else if(learning_type == double_learning){
+                printf("Q1-table:\n");
                 printQ(Q1);
+                printf("Q2-table:\n");
                 printQ(Q2);
             } else {
                 printf("Warning during Q initialization: unsupported learning_type.\n");
             }
+            printf("Maze:\n");
             maze_render();
         }
         
@@ -474,10 +487,9 @@ int main(){
                 printf("Warning during training: unsupported learning_type.\n");
             }
             result_table[result_table_length] = current_epoch;
-            
 
-            if(debug_mode>2){
-                if(learning_type == simple_learning){
+            if(animate_learning>0){
+                if(learning_type == simple_learning || learning_type == sarsa_learning){
                     printQ(Q);
                 } else if(learning_type == double_learning){
                     printQ(Q1);
@@ -492,7 +504,7 @@ int main(){
             if(debug_mode>0){
                 printf("Win rate: %.0f%%\n",winrate);
             }
-            if(winrate == 100){
+            if(result_table[current_epoch%result_table_length] == 1){
                 super_winrate +=1;
             } else {
                 super_winrate = 0;
@@ -527,13 +539,17 @@ int main(){
        
 
         if(learning_type == simple_learning || learning_type == sarsa_learning){
+            printf("Q-table:\n");
             printQ(Q);
         } else if(learning_type == double_learning){
+            printf("Q1-table:\n");
             printQ(Q1);
+            printf("Q2-table:\n");
             printQ(Q2);
         } else {
             printf("Warning in result display: unsupported learning_type.\n");
         }
+        printf("Maze:\n");
         maze_render();
         
         if(debug_mode>2){

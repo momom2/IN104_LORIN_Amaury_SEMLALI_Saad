@@ -91,7 +91,7 @@ void maze_reset(){
 ////  THIS IS WHERE THE REWARD FUNCTION LIES (IMPLICITLY) ////
 
 envOutput maze_step(action a){
-    double reward = -0.04;
+    double reward = -0.14;
     int done = 0;
     int moved_successfully = 0;
     envOutput stepOut;
@@ -182,7 +182,8 @@ envOutput maze_step(action a){
    return stepOut;
 }
 
-char graphical_move(int action){
+char graphical_move(int action, int preference){
+    if(!preference){return 32;} else {
     if (action == up){
         return 94;
     }
@@ -198,7 +199,7 @@ char graphical_move(int action){
     else {
         printf("Erreur dans la représentation graphique des actions.\n");
         return 63;
-    }
+    }}
 }
 
 
@@ -213,7 +214,7 @@ void test_maze_step(int random){
         state_col = cols-1;
         int temp_state_row = state_row;
         int temp_state_col = state_col;
-        printf("Placed in (%d,%d). Takes action %d (%c).\n",temp_state_row,temp_state_col,a,graphical_move(a));
+        printf("Placed in (%d,%d). Takes action %d (%c).\n",temp_state_row,temp_state_col,a,graphical_move(a, 1));
         envOutput out = maze_step(a);
         printf("Reward: %f\nState: now in (%d,%d).\nHas moved? %d\nDone? %d\n",  \
             out.reward,state_row,state_col,out.has_moved,out.done);
@@ -226,7 +227,7 @@ void test_maze_step(int random){
             temp_state_col = state_col;
             state_row = rand_row();
             temp_state_row = state_row;
-            printf("Placed in (%d,%d). Takes action %d (%c).\n",temp_state_row,temp_state_col,a,graphical_move(a));
+            printf("Placed in (%d,%d). Takes action %d (%c).\n",temp_state_row,temp_state_col,a,graphical_move(a, 1));
             envOutput out = maze_step(a);
             printf("Reward: %f\nState: now in (%d,%d).\nHas moved? %d\nDone? %d\n",  \
                 out.reward,out.new_row,out.new_col,out.has_moved,out.done);

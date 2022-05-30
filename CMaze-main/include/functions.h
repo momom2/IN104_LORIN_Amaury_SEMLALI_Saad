@@ -11,7 +11,7 @@ extern void test_randf();
 extern void test_rand();
 
 extern double listmax(double* list, int length);
-extern int argmax(double* list, int length);
+extern int argmax(double* list, int length, int* preference);
 extern int argmax2(double* list1,double* list2, int length);
 
 extern int msleep(long msec);
@@ -45,5 +45,7 @@ double somme(double* liste, int length, double (*function)(double, double) , dou
 extern void test_somme();
 
 int get_latest_results(int* result_table,int result_table_length);
+
+void print_list(double* list, int length);
 
 #endif
