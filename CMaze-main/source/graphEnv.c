@@ -102,7 +102,7 @@ envOutput graph_step(action a){
     if(visited[a] == known){
         reward -= 0.1; // On préfère légèrement ne pas passer plusieurs fois au même endroit.
     }
-    if(graph[state][a]>999){
+    if(graph[state][a]>=POIDS_INFINI){
         // On ne bouge pas.
         reward -= graph[state][a];
     } else {
