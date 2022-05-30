@@ -85,7 +85,7 @@ action rand_action_epsilon(double** Q,int coordonnee, double epsilon){
         return rand_action_uniform();
     } 
     else { //Remember.
-        return (action) argmax(Q[coordonnee],number_actions);
+        return (action) argmax(Q[coordonnee],number_actions,NULL);
     }
 }
 
@@ -164,7 +164,7 @@ int goal_reached(int coordonnee, int done){;
 void printQ(double** Q){
     printf("\n");
     for(int i=0;i<size;++i){
-        printf("%d ",argmax(Q[i],number_actions));
+        printf("%d ",argmax(Q[i],number_actions,NULL));
     }
     printf("\n");
 }
