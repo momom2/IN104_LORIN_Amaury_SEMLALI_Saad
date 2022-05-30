@@ -1,6 +1,6 @@
 # IN104_LORIN_Amaury_SEMLALI_Saad
 Reinforcement learning implemented to escape a maze and/or find the shortest path on a graph  
-by Sâad IDRISSI SEMLALI and Amaury LORIN  
+by Saâd IDRISSI SEMLALI and Amaury LORIN  
 for educational and entertainment purposes.  
 
 To use this you need:  
