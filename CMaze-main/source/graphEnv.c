@@ -1,7 +1,7 @@
 #include "graphEnv.h" 
 #include "functions.h"
 
-#define POIDS_INFINI 1000
+#define POIDS_INFINI 100
 
 
 void alloc_graph(){
